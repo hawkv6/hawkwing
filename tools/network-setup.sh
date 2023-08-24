@@ -130,6 +130,8 @@ $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock set interface ip address tap11 200
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock create tap id 12 host-bridge br-a1
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock set interface state tap12 up
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock enable ip6 interface tap12
+$VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock ip6 table add 10
+$VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock set interface ip6 table tap12 10
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock set interface ip address tap12 2001:db8:a1::1/64
 # static routing vpp network
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock ip route add fcbb:bb00:2::/48 via 2001:db8:12::2
@@ -139,8 +141,11 @@ $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock ip route add fcbb:bb00:5::/48 via 
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock ip route add fcbb:bb00:6::/48 via 2001:db8:12::2
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock ip route add fcbb:bb00:6::/48 via 2001:db8:13::3
 # static routing to site-a
-$VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock ip route add fcbb:aa00:1::/48 via 2001:db8:a1::a
-$VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock ip route add fcbb:cc00:1::/48 via 2001:db8:a1::a
+# $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock ip route add fcbb:aa00:1::/48 via 2001:db8:a1::a
+# $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock ip route add fcbb:cc00:1::/48 via 2001:db8:a1::a
+$VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock ip route add ::/0 table 10 next-hop-table 0
+$VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock ip route add fcbb:aa00:1::/48 table 10 via 2001:db8:a1::a next-hop-table 10
+$VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock ip route add fcbb:cc00:1::/48 table 10 via 2001:db8:a1::a next-hop-table 10
 # static routing to site-b
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock ip route add fcbb:cc00:2::/48 via 2001:db8:12::2
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock ip route add fcbb:cc00:2::/48 via 2001:db8:13::3
