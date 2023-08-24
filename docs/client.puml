@@ -1,0 +1,31 @@
+@startuml
+
+participant "DNS" as dns << (S,#ADD1B2) Service >> order 2
+
+participant "Client" as client
+
+participant "Directory Service" as ds << (S,#ADD1B2) Service >> order 3
+
+participant "Server" as server
+
+client -> dns: DNS Query
+dns --> client: DNS Response
+alt "Introspecting DNS Response" 
+    client -> client: Write IP Address to eBPF Map 
+end
+
+
+
+client -> server: Connect to DB
+alt "Introspecting Connection Request"
+    else "SID not in eBPF Map"
+        client -> ds: Directory Service Query with IP Address
+        ds --> client: Directory Service Response
+        alt "Update eBPF Map"
+            client -> client: Update eBPF Map with Directory Service Response SID List
+        end
+    else "SID in eBPF Map"
+    client -> server: Encapsulate Traffic to DB with SID List
+end
+@enduml
+
