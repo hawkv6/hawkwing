@@ -445,4 +445,6 @@ $VPPCTL_BINARY_PATH -s /run/vpp/cli.site-c.sock ip route add fcbb:cc00:5::/48 vi
 ip netns exec ns-host-a ping -c 5 fcbb:cc00:2::a &
 ip netns exec ns-host-a ping -c 5 fcbb:cc00:3::a &
 ip netns exec ns-host-a ping -c 5 fcbb:cc00:4::f &
-ip netns exec ns-host-a ping -c 5 fcbb:cc00:5::f &
+ip netns exec ns-host-a ping -c 5 fcbb:cc00:5::f 
+
+sleep 5
