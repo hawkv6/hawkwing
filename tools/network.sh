@@ -19,7 +19,7 @@ fi
 
 # Function to display help/usage message
 usage() {
-    echo -e "${YELLOW}Usage:${NC} $0 [-h] [-s] [-c]"
+    echo -e "${YELLOW}Usage:${NC} $0 [-h] [-s] [-c] [-i] [-n]"
     echo "  -h                  Display this help message"
     echo "  -s                  Start the network"
     echo "  -c                  Clean the network"
@@ -45,6 +45,7 @@ clean_network() {
 vpp_interaction() {
     local PROCESS=$1
     CMD="$VPPCTL_BINARY_PATH -s /run/vpp/cli.$PROCESS.sock"
+    echo -e "${GREEN}Connecting to ${PROCESS}...${NC}"
     $CMD
 }
 
