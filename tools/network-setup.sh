@@ -441,6 +441,8 @@ $VPPCTL_BINARY_PATH -s /run/vpp/cli.site-c.sock ip route add fcbb:aa00:2::/48 vi
 # static routing to beyond-ctrl
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.site-c.sock ip route add fcbb:cc00:5::/48 via 2001:db8:c6::6
 
+sleep 10
+
 # Ping to startup network & arp
 ip netns exec ns-host-a ping -c 5 fcbb:cc00:2::a &
 ip netns exec ns-host-a ping -c 5 fcbb:cc00:3::a &

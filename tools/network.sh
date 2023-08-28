@@ -33,6 +33,8 @@ start_network() {
     echo -e "${GREEN}Starting the network...${NC}"
     bash network-setup.sh
     echo -e "${GREEN}Network started successfully${NC}"
+    start_dns_server
+    start_webservers
 }
 
 # Function to clean the network
@@ -53,6 +55,19 @@ open_namespace_shell() {
     local NS=$1
     echo -e "${GREEN}Entering namespace ${NS}...${NC}"
     ip netns exec "$NS" /bin/bash
+}
+
+start_dns_server() {
+    echo -e "${GREEN}Starting DNS server...${NC}"
+    ip netns exec ns-dns ./dns/dns &
+    echo -e "${GREEN}DNS server started successfully${NC}"
+}
+
+start_webservers() {
+    echo -e "${GREEN}Starting webservers...${NC}"
+    ip netns exec ns-host-b ./web/webserver host-b 80 &
+    ip netns exec ns-host-c ./web/webserver host-c 8080 &
+    echo -e "${GREEN}Webservers started successfully${NC}"
 }
 
 # Parse arguments

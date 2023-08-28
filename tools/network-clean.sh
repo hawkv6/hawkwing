@@ -3,6 +3,10 @@
 # Killing vpp instances
 kill $(pidof vpp)
 
+# Killing dns and webserver instances
+kill $(pidof ./dns/dns)
+kill $(pidof ./web/webserver)
+
 # Bring down host namespaces
 ip netns del ns-host-a
 ip netns del ns-host-b
