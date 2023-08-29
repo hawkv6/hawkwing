@@ -15,6 +15,13 @@ RESET  := $(shell tput -Txterm sgr0)
 
 all: go-gen build ## Build the entire project
 
+install-deps: ## Install development dependencies
+	go install honnef.co/go/tools/cmd/staticcheck@latest
+	sudo apt install clang llvm gcc libbpf-dev linux-headers-$(uname -r)
+	sudo ln -s /usr/include/x86_64-linux-gnu/asm /usr/include/asm
+# https://github.com/xdp-project/xdp-tools
+# https://github.com/libbpf/bpftool/blob/master/README.md
+
 build: ## Compile the Go binary
 	mkdir -p out/bin
 	$(GOCMD) build -o out/bin/$(BINARY_NAME) ./cmd/$(BINARY_NAME)/main.go
