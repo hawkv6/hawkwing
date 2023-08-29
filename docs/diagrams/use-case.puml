@@ -1,0 +1,54 @@
+@startuml
+left to right direction
+hide circle
+hide methods
+hide stereotype
+
+!define ACTORSTYLE class
+skinparam actorStyle awesome
+skinparam usecase {
+	BackgroundColor #a7d5c2
+  	BorderColor #007e6b
+  	BackgroundColor<<nonmvp>> #d0a9d0
+	BorderColor<<nonmvp>> #6b3881
+	Shadowing false
+}
+
+actor "Network Admin" as admin #d72864
+actor "Client Application" as client #d72864
+actor "Server Application" as server #d72864
+actor "Directory Service" as dirService #Black
+
+rectangle "HawkWing | End-to-End SRv6" {
+    usecase "Configure Traffic Intent" as UC1
+    usecase "Intercept DNS Responses" as UC2
+    usecase "Request SID List from Directory Service" as UC3
+    usecase "Create Intent eBPF Map" as UC4
+    usecase "Reverse Incoming SID List" as UC5
+    usecase "Encapsulate Traffic with SRv6" as UC6
+    
+
+    
+    
+}
+server --> UC5 : trigger
+server --> UC6 : trigger
+
+admin --> UC1 : configures
+client --> UC4 : initialize
+client --> UC2 : trigger
+client --> UC3 : trigger
+client --> UC6 : trigger
+ 
+
+
+UC1 ..> UC3 : supplies GRPC Server Configuration
+UC1 ..> UC4 : supplies Domain Name and Port
+UC2 ..> UC4 : supplies IPv6 Address
+UC3 ..> UC4 : supplies SID List
+UC6 <.. UC4 : supplies Encapsulation Information
+UC5 ..> UC4 : supplies Reversed SID List
+
+dirService ..> UC3 : supplies SID List
+
+@enduml
