@@ -1,10 +1,13 @@
 #include <linux/bpf.h>
+#include <linux/if_ether.h>
+#include <linux/ip.h>
+#include <linux/udp.h>
 #include <bpf/bpf_helpers.h>
 
-SEC("xdp_drop")
-int xdp_drop_prog(struct xdp_md *ctx)
-{
-    return XDP_DROP;
+SEC("filter")
+int parse_dns(struct __sk_buff *skb) {
+
+    return XDP_PASS;
 }
 
 char _license[] SEC("license") = "GPL";

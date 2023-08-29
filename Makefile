@@ -1,7 +1,7 @@
 # Copyright (c) 2023 Julian Klaiber
 
 GOCMD=go
-BINARY_NAME=fluvia
+BINARY_NAME=hawkwing
 CLANG ?= clang
 CFLAGS :=  -O2 -g -Wall $(CFLAGS)
 
@@ -46,10 +46,10 @@ grpc-gen: ## Generate gRPC code
 	protoc -I ./api/proto --go_out=plugins=grpc:./api/proto ./api/proto/*.proto
 
 setup-network: ## Setup the development network environment
-	@sudo ./tools/network.sh -s
+	cd tools && sudo ./network.sh -s
 
 clean-network: ## Clean the development network environment
-	@sudo ./tools/network.sh -c
+	cd tools && sudo ./network.sh -c
 
 start-client: ## Start the client
 	@echo "Starting client..."
