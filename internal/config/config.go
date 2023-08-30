@@ -10,13 +10,24 @@ var viperInstance = viper.New()
 
 var Params Config
 
+type HawkEyeConfig struct {
+	Hostname string
+	Port     int
+}
+
+type TrafficControlConfig struct {
+	Sid []string
+}
+
+type ServiceConfig struct {
+	Intent         string
+	Port           int
+	TrafficControl TrafficControlConfig
+}
+
 type Config struct {
-	HawkEye struct {
-		Hostname string
-		Port     int
-	}
-	Services struct {
-	}
+	HawkEye  HawkEyeConfig
+	Services map[string][]ServiceConfig
 }
 
 func ReadConfig(cfgFile string) error {

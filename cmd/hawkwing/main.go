@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"net"
 	"os"
 
 	"github.com/hawkv6/hawkwing/internal/version"
+	"github.com/hawkv6/hawkwing/pkg/client"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -23,13 +23,7 @@ var rootCmd = &cobra.Command{
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Hello World")
-		ips, err := net.LookupIP("wb.hawk.net")
-		if err != nil {
-			fmt.Println(err)
-		}
-		for _, ip := range ips {
-			fmt.Println(ip)
-		}
+		client.NewClient("host-a")
 	},
 }
 

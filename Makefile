@@ -17,7 +17,7 @@ all: go-gen build ## Build the entire project
 
 install-deps: ## Install development dependencies
 	go install honnef.co/go/tools/cmd/staticcheck@latest
-	sudo apt install clang llvm gcc libbpf-dev linux-headers-$(uname -r)
+	sudo apt install clang llvm gcc libbpf-dev libelf-dev make linux-headers-$(uname -r)
 	sudo ln -s /usr/include/x86_64-linux-gnu/asm /usr/include/asm
 # https://github.com/xdp-project/xdp-tools
 # https://github.com/libbpf/bpftool/blob/master/README.md
@@ -31,7 +31,7 @@ clean: ## Clean build artifacts
 
 go-gen: export BPF_CLANG := $(CLANG)
 go-gen: export BPF_CFLAGS := $(CFLAGS)
-go-gen:
+go-gen: ## Generate BPF code and Go bindings
 	go generate ./...
 
 test: ## Run go tests
@@ -53,6 +53,7 @@ clean-network: ## Clean the development network environment
 
 start-client: ## Start the client
 	@echo "Starting client..."
+	sudo ip netns exec ns-host-a ./out/bin/hawkwing
 
 start-server: ## Start the server
 	@echo "Starting server..."

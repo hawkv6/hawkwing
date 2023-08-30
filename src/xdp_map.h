@@ -11,8 +11,8 @@ struct
 {
     __uint(type, BPF_MAP_TYPE_LRU_HASH);
     __uint(max_entries, MAX_MAP_ENTRIES);
-    __type(key, struct intent_service_data);
-    __type(value, __u64);
-} intent_service_map SEC(".maps");
+    __type(key, char[MAX_DOMAIN_NAME_LEN]);
+    __type(value, struct client_data);
+} client_map SEC(".maps");
 
 #endif
