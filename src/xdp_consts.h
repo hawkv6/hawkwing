@@ -5,4 +5,6 @@
 #define MAX_SEGMENTLIST_ENTRIES 10
 #define MAX_DOMAIN_NAME_LEN 256
 
+#define UDP_P_DNS 53
+
 #endif
