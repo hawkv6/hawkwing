@@ -15,4 +15,12 @@ struct
     __type(value, struct client_data);
 } client_map SEC(".maps");
 
+struct
+{
+    __uint(type, BPF_MAP_TYPE_LRU_HASH);
+    __uint(max_entries, MAX_MAP_ENTRIES);
+    __type(key, int);
+    __type(value, char[MAX_DOMAIN_NAME_LEN]);
+} test_map SEC(".maps");
+
 #endif

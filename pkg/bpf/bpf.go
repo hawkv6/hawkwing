@@ -1,7 +1,9 @@
 package bpf
 
 import (
+	"fmt"
 	"net"
+	"strings"
 
 	"github.com/cilium/ebpf"
 )
@@ -33,7 +35,12 @@ func InitializeBpfMap(m *ebpf.Map) error {
 		copy(clientData.Segments[i].In6U.U6Addr8[:], ipv6Segment.To16())
 	}
 
-	error := m.Put(domainToKey("wb.hawk.net"), clientData)
+	// error := m.Put(domainToKey("wbhawknet"), clientData)
+	key, err := FormatDNSName("wb.hawk.net")
+	if err != nil {
+		return err
+	}
+	error := m.Put(key, clientData)
 	if error != nil {
 		return error
 	}
@@ -45,4 +52,32 @@ func domainToKey(domain string) [256]byte {
 	var key [256]byte
 	copy(key[:], []byte(domain))
 	return key
+}
+
+func FormatDNSName(domain string) ([256]byte, error) {
+	var result [256]byte
+	labels := strings.Split(domain, ".")
+	offset := 0
+
+	for _, label := range labels {
+		if len(label) == 0 {
+			return result, fmt.Errorf("Empty label detected")
+		}
+
+		// Write the label length
+		result[offset] = byte(len(label))
+		offset++
+
+		// Write the label itself
+		for i := 0; i < len(label); i++ {
+			result[offset] = label[i]
+			offset++
+		}
+	}
+
+	// Append zero byte to indicate end of the domain name
+	result[offset] = 0
+	offset++
+
+	return result, nil
 }
