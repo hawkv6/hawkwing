@@ -1,34 +1,26 @@
 #ifndef __DNS_H
 #define __DNS_H
 
+#include <linux/in6.h>
+
 #define MAX_DNS_NAME_LENGTH 256
 
-struct dns_hdr
-{
+struct dns_hdr {
     __u16 transaction_id;
-    __u8 rd : 1;      //Recursion desired
-    __u8 tc : 1;      //Truncated
-    __u8 aa : 1;      //Authoritive answer
-    __u8 opcode : 4;  //Opcode
-    __u8 qr : 1;      //Query/response flag
-    __u8 rcode : 4;   //Response code
-    __u8 cd : 1;      //Checking disabled
-    __u8 ad : 1;      //Authenticated data
-    __u8 z : 1;       //Z reserved bit
-    __u8 ra : 1;      //Recursion available
-    __u16 q_count;    //Number of questions
-    __u16 ans_count;  //Number of answer RRs
-    __u16 auth_count; //Number of authority RRs
-    __u16 add_count;  //Number of resource RRs
-};
-
-struct dns_header {
-    __u16 id;
-    __u16 flags;
-    __u16 qdcount;
-    __u16 ancount;
-    __u16 nscount;
-    __u16 arcount;
+    __u8 rd : 1; 
+    __u8 tc : 1;  
+    __u8 aa : 1;   
+    __u8 opcode : 4;
+    __u8 qr : 1;    
+    __u8 rcode : 4; 
+    __u8 cd : 1;  
+    __u8 ad : 1;   
+    __u8 z : 1;     
+    __u8 ra : 1;   
+    __u16 q_count;  
+    __u16 ans_count; 
+    __u16 auth_count; 
+    __u16 add_count;  
 };
 
 struct dns_query {
@@ -37,13 +29,15 @@ struct dns_query {
     char name[MAX_DNS_NAME_LENGTH];
 };
 
-struct dns_response {
+struct dns_answer {
     __u16 query_pointer;
+    // char name[MAX_DNS_NAME_LENGTH];
     __u16 record_type;
     __u16 record_class;
     __u32 ttl;
     __u16 data_length;
-};
+    // struct in6_addr ipv6_address;
+} __attribute__((packed));
 
 struct a_record {
     struct in6_addr ipv6_addr;

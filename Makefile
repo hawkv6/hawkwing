@@ -3,7 +3,7 @@
 GOCMD=go
 BINARY_NAME=hawkwing
 CLANG ?= clang
-CFLAGS :=  -O2 -g -Wall $(CFLAGS)
+CFLAGS :=  -O2 -g -Wall $(CFLAGS) -DDEBUG
 
 GREEN  := $(shell tput -Txterm setaf 2)
 YELLOW := $(shell tput -Txterm setaf 3)

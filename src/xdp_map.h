@@ -20,7 +20,7 @@ struct
     __uint(type, BPF_MAP_TYPE_LRU_HASH);
     __uint(max_entries, MAX_MAP_ENTRIES);
     __type(key, int);
-    __type(value, char[MAX_DOMAIN_NAME_LEN]);
+    __type(value, struct in6_addr);
 } test_map SEC(".maps");
 
 #endif

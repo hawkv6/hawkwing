@@ -14,7 +14,10 @@
 #include "xdp_map.h"
 #include "dns.h"
 
+#define memcpy __builtin_memcpy
+
 static int parse_dns_query(struct xdp_md *ctx, void *dns_query_start, struct dns_query *query);
+static int parse_dns_answer(struct xdp_md *ctx, struct dns_hdr *dns_hdr, int query_length, struct dns_answer *a, struct in6_addr *ipv6_addr);
 
 SEC("xdp")
 int intercept_dns(struct xdp_md *ctx) {
@@ -44,7 +47,6 @@ int intercept_dns(struct xdp_md *ctx) {
     if (ipv6->nexthdr != IPPROTO_UDP)
         return XDP_PASS;
         
-
     // Scanning UDP header
     struct udphdr *udp = (void *)(ipv6 + 1);
 
@@ -57,79 +59,124 @@ int intercept_dns(struct xdp_md *ctx) {
         return XDP_PASS;
 
     // Scanning DNS header
-    // struct dns_header *dns = (void *)(udp + 1);
     struct dns_hdr *dns = (void *)(udp + 1);
 
     // Check DNS header validity
     if ((void *)(dns + 1) > data_end)
         return XDP_PASS;
 
-    // Only proceed if there's at least one answer
-    // if (dns->ancount == 0)
-    //     return XDP_PASS;
+    // Check if there is at least one answer
     if (dns->ans_count == 0)
         return XDP_PASS;
 
-    // Scanning DNS data
-    __u8 *dns_data = (__u8 *)(dns + 1);
-    if ((void *)(dns_data) > data_end)  // Check if enough data exists
-        return XDP_PASS;
-
     // Get a pointer to the start of the DNS query
-    // void *query_start = dns + 32;
-    // struct dns_hdr *dns_hdr = (struct dns_hdr *)dns;
-    // void *query_start = (void *)dns_hdr + sizeof(struct dns_hdr);
-    void *query_start = (void *)dns + sizeof(struct dns_hdr);
+    void *query_start = (void *)(dns + 1);
     struct dns_query query;
     int query_length = 0;
-    // Parse the DNS query
+
     query_length = parse_dns_query(ctx, query_start, &query);
     if (query_length < 1) {
-        bpf_printk("Error parsing DNS query\n");
+        #ifdef DEBUG
+        bpf_printk("Error parsing DNS query");
+        #endif
         return XDP_PASS;
     }
 
     // Check if the query is a AAAA query (IPv6 query) dns record type 28
     if (query.record_type != 28) {
-        bpf_printk("Not an AAAA query\n");
+        #ifdef DEBUG
+        bpf_printk("Not an AAAA query");
+        #endif
         return XDP_PASS;
     }
 
-    // if ((void *)(dns_data + 16) > data_end)  
-    //     bpf_printk("Error: boundary exceeded while retrieving IPv6 address");
-    //     return XDP_PASS;
 
-    // Assuming that the first answer is the one we want
-    struct in6_addr *ipv6_address = (struct in6_addr *)(dns_data);
+    // here uncommented
+    struct dns_answer dns_answer;
+    struct in6_addr ipv6_address = {0};
+    int dns_answer_result = parse_dns_answer(ctx, dns, query_length, &dns_answer, &ipv6_address);
+    if (dns_answer_result < 0) {
+        #ifdef DEBUG
+        bpf_printk("Error parsing DNS answer");
+        #endif
+        return XDP_PASS;
+    }
+    bpf_printk("dns record type: %u\n", bpf_ntohs(dns_answer.record_type));
+    bpf_printk("dns record class: %u\n", bpf_ntohs(dns_answer.record_class));
+    bpf_printk("dns ttl (ntohl): %u\n", bpf_ntohl(dns_answer.ttl));
+    bpf_printk("dns data length (ntohs): %u\n", bpf_ntohs(dns_answer.data_length));
+    bpf_printk("dns data length (plain): %u\n", bpf_ntohs(dns_answer.data_length));
 
-    bpf_printk("IPv6 address: %pI6\n", ipv6_address);
-    bpf_printk("DNS query name: %s\n", query.name);
 
-    int key = 0;
-    bpf_map_update_elem(&test_map, &key, query.name, BPF_ANY);
+    int key = 1;
+    bpf_map_update_elem(&test_map, &key, &ipv6_address, BPF_ANY);
+
+
 
     // Check if there is an entry with that domain name in the map
     // If there is no entry, we stop here
     struct client_data *client_data;
     client_data = bpf_map_lookup_elem(&client_map, query.name);
     if (!client_data) {
+        #ifdef DEBUG
         bpf_printk("No entry found for %s\n", query.name);
+        #endif
         return XDP_PASS;
     }
-    bpf_printk("works until here");
+    bpf_printk("Found entry for %s\n", query.name);
 
-    // // Update the destination address of the packet
-    if ((void *)(ipv6_address + 1) > data_end) {
-        bpf_printk("Error: boundary exceeded while updating IPv6 address");
-        return XDP_PASS;
-    }
-    client_data->dstaddr = *ipv6_address;
+    client_data->dstaddr = ipv6_address;
     bpf_map_update_elem(&client_map, query.name, client_data, BPF_EXIST);
+
+    #ifdef DEBUG
+    bpf_printk("Updated IPv6 address: %p for domain name: %s\n", &ipv6_address, query.name);
+    #endif
 
     return XDP_PASS;
 }
 
-//Parse query and return query length
+static int parse_dns_answer(struct xdp_md *ctx, struct dns_hdr *dns_hdr, int query_length, struct dns_answer *a, struct in6_addr *ipv6_addr) {
+    void *data_end = (void *)(long)ctx->data_end;
+    struct dns_answer *temp_a;
+
+    // Calculate the pointer where the DNS answer begins in the packet
+    temp_a = (struct dns_answer *)((__u8 *)dns_hdr + sizeof(struct dns_hdr) + query_length);
+    // Boundary check
+    if ((void *)(temp_a) + sizeof(struct dns_answer) > data_end) {
+        #ifdef DEBUG
+        bpf_printk("Error: boundary exceeded while parsing DNS answer");
+        #endif
+        return -1;
+    }
+    memcpy(a, temp_a, sizeof(struct dns_answer));
+    a->query_pointer = bpf_ntohs(a->query_pointer);
+    a->record_type = bpf_ntohs(a->record_type);
+    a->record_class = bpf_ntohs(a->record_class);
+    a->ttl = bpf_ntohl(a->ttl);
+    a->data_length = bpf_ntohs(a->data_length);
+
+    if (a->record_type == 28) {
+        unsigned char *ipv6_ptr = (__u8 *)temp_a + sizeof(struct dns_answer);
+        struct in6_addr *temp_ipv6_addr = ipv6_ptr;
+
+        // Boundary check
+        // if ((void *)(ipv6_ptr + 1) > data_end) {
+        if ((void *)(temp_ipv6_addr) + sizeof(struct in6_addr) > data_end) {
+            #ifdef DEBUG
+            bpf_printk("Error: boundary exceeded while parsing IPv6 address");
+            #endif
+            return -1;
+        }
+        memcpy(ipv6_addr, ipv6_ptr, sizeof(struct in6_addr));
+        bpf_printk("IPv6 address: %p\n", ipv6_addr);
+    }
+
+    // No need for byte order conversion for IPv6 address, just copy
+
+    return 0;
+}
+
+
 static int parse_dns_query(struct xdp_md *ctx, void *query_start, struct dns_query *q)
 {
     void *data_end = (void *)(long)ctx->data_end;
@@ -150,7 +197,9 @@ static int parse_dns_query(struct xdp_md *ctx, void *query_start, struct dns_que
         //Boundary check of cursor. Verifier requires a +1 here. 
         //Probably because we are advancing the pointer at the end of the loop
         if (cursor + 1 > data_end) {
+            #ifdef DEBUG
             bpf_printk("Error: boundary exceeded while parsing DNS query name");
+            #endif
             break;
         }
 
@@ -160,7 +209,9 @@ static int parse_dns_query(struct xdp_md *ctx, void *query_start, struct dns_que
             //We've reached the end of the query name.
             //This will be followed by 2x 2 bytes: the dns type and dns class.
             if (cursor + 5 > data_end) {
+                #ifdef DEBUG
                 bpf_printk("Error: boundary exceeded while retrieving DNS record type and class");
+                #endif
             } else {
                 q->record_type = bpf_htons(*(__u16 *)(cursor + 1));
                 q->record_class = bpf_htons(*(__u16 *)(cursor + 3));
