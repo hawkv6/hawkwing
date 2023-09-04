@@ -17,7 +17,7 @@ all: go-gen build ## Build the entire project
 
 install-deps: ## Install development dependencies
 	go install honnef.co/go/tools/cmd/staticcheck@latest
-	sudo apt install clang llvm gcc libbpf-dev libelf-dev make linux-headers-$(uname -r)
+	sudo apt install clang clang-format llvm gcc libbpf-dev libelf-dev make linux-headers-$(uname -r)
 	sudo ln -s /usr/include/x86_64-linux-gnu/asm /usr/include/asm
 # https://github.com/xdp-project/xdp-tools
 # https://github.com/libbpf/bpftool/blob/master/README.md
@@ -61,6 +61,9 @@ start-server: ## Start the server
 start-controller: ## Start the controller
 	@echo "Starting controller..."
 
+fix-clang-style: ## Fix the clang style
+	find . -iname *.h -o -iname *.c | xargs clang-format -i
+	
 help: ## Show this help message
 	@echo ''
 	@echo 'Usage:'
