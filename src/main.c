@@ -17,7 +17,7 @@
 #define memcpy __builtin_memcpy
 
 static int parse_dns_query(struct xdp_md *ctx, void *dns_query_start, struct dns_query *query);
-static int parse_dns_answer(struct xdp_md *ctx, struct dns_hdr *dns_hdr, int query_length, struct dns_answer *a, struct in6_addr *ipv6_addr);
+static int parse_dns_answer(struct xdp_md *ctx, struct dns_hdr *dns_hdr, int query_length, struct dns_answer *a);
 
 SEC("xdp")
 int intercept_dns(struct xdp_md *ctx) {
@@ -74,6 +74,7 @@ int intercept_dns(struct xdp_md *ctx) {
     struct dns_query query;
     int query_length = 0;
 
+    // Parse the DNS query
     query_length = parse_dns_query(ctx, query_start, &query);
     if (query_length < 1) {
         #ifdef DEBUG
@@ -82,7 +83,7 @@ int intercept_dns(struct xdp_md *ctx) {
         return XDP_PASS;
     }
 
-    // Check if the query is a AAAA query (IPv6 query) dns record type 28
+    // Check if the query is an AAAA query (IPv6 query) dns record type 28
     if (query.record_type != 28) {
         #ifdef DEBUG
         bpf_printk("Not an AAAA query");
@@ -90,28 +91,15 @@ int intercept_dns(struct xdp_md *ctx) {
         return XDP_PASS;
     }
 
-
-    // here uncommented
+    // Parse the DNS answer
     struct dns_answer dns_answer;
-    struct in6_addr ipv6_address = {0};
-    int dns_answer_result = parse_dns_answer(ctx, dns, query_length, &dns_answer, &ipv6_address);
+    int dns_answer_result = parse_dns_answer(ctx, dns, query_length, &dns_answer);
     if (dns_answer_result < 0) {
         #ifdef DEBUG
         bpf_printk("Error parsing DNS answer");
         #endif
         return XDP_PASS;
     }
-    bpf_printk("dns record type: %u\n", bpf_ntohs(dns_answer.record_type));
-    bpf_printk("dns record class: %u\n", bpf_ntohs(dns_answer.record_class));
-    bpf_printk("dns ttl (ntohl): %u\n", bpf_ntohl(dns_answer.ttl));
-    bpf_printk("dns data length (ntohs): %u\n", bpf_ntohs(dns_answer.data_length));
-    bpf_printk("dns data length (plain): %u\n", bpf_ntohs(dns_answer.data_length));
-
-
-    int key = 1;
-    bpf_map_update_elem(&test_map, &key, &ipv6_address, BPF_ANY);
-
-
 
     // Check if there is an entry with that domain name in the map
     // If there is no entry, we stop here
@@ -123,19 +111,22 @@ int intercept_dns(struct xdp_md *ctx) {
         #endif
         return XDP_PASS;
     }
-    bpf_printk("Found entry for %s\n", query.name);
 
-    client_data->dstaddr = ipv6_address;
+    #ifdef DEBUG
+    bpf_printk("Found entry for %s\n", query.name);
+    #endif
+
+    client_data->dstaddr = dns_answer.ipv6_address;
     bpf_map_update_elem(&client_map, query.name, client_data, BPF_EXIST);
 
     #ifdef DEBUG
-    bpf_printk("Updated IPv6 address: %p for domain name: %s\n", &ipv6_address, query.name);
+    bpf_printk("Updated IPv6 address for domain name: %s\n", query.name);
     #endif
 
     return XDP_PASS;
 }
 
-static int parse_dns_answer(struct xdp_md *ctx, struct dns_hdr *dns_hdr, int query_length, struct dns_answer *a, struct in6_addr *ipv6_addr) {
+static int parse_dns_answer(struct xdp_md *ctx, struct dns_hdr *dns_hdr, int query_length, struct dns_answer *a) {
     void *data_end = (void *)(long)ctx->data_end;
     struct dns_answer *temp_a;
 
@@ -154,24 +145,6 @@ static int parse_dns_answer(struct xdp_md *ctx, struct dns_hdr *dns_hdr, int que
     a->record_class = bpf_ntohs(a->record_class);
     a->ttl = bpf_ntohl(a->ttl);
     a->data_length = bpf_ntohs(a->data_length);
-
-    if (a->record_type == 28) {
-        unsigned char *ipv6_ptr = (__u8 *)temp_a + sizeof(struct dns_answer);
-        struct in6_addr *temp_ipv6_addr = ipv6_ptr;
-
-        // Boundary check
-        // if ((void *)(ipv6_ptr + 1) > data_end) {
-        if ((void *)(temp_ipv6_addr) + sizeof(struct in6_addr) > data_end) {
-            #ifdef DEBUG
-            bpf_printk("Error: boundary exceeded while parsing IPv6 address");
-            #endif
-            return -1;
-        }
-        memcpy(ipv6_addr, ipv6_ptr, sizeof(struct in6_addr));
-        bpf_printk("IPv6 address: %p\n", ipv6_addr);
-    }
-
-    // No need for byte order conversion for IPv6 address, just copy
 
     return 0;
 }
