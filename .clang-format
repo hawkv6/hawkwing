@@ -1,0 +1,26 @@
+---
+# Use tabs for indentation
+UseTab: Always
+TabWidth: 4
+IndentWidth: 4
+
+# Braces
+BreakBeforeBraces: Linux
+
+# Column limit
+ColumnLimit: 80
+
+# Indent case labels
+IndentCaseLabels: true
+
+# Disallow short if statements to be on a single line
+AllowShortIfStatementsOnASingleLine: false
+
+# Keep simple get methods on a single line
+AllowShortFunctionsOnASingleLine: Inline
+
+# Include Blocks
+IncludeBlocks: Preserve
+
+# Sort includes
+SortIncludes: true

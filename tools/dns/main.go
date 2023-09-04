@@ -21,8 +21,8 @@ func (h *DNSHandler) ServeDNS(rw fastdns.ResponseWriter, req *fastdns.Message) {
 	hostC := []byte("wc.hawk.net")
 	if bytes.Equal(req.Domain, hostB) {
 		switch req.Question.Type {
-		case fastdns.TypeA:
-			fastdns.HOST(rw, req, 60, []netip.Addr{netip.MustParseAddr("fcbb:cc00:2::a")})
+		// case fastdns.TypeA:
+		// 	fastdns.HOST(rw, req, 60, []netip.Addr{netip.MustParseAddr("fcbb:cc00:2::a")})
 		case fastdns.TypeAAAA:
 			fastdns.HOST(rw, req, 60, []netip.Addr{netip.MustParseAddr("fcbb:cc00:2::a")})
 		default:
@@ -30,8 +30,8 @@ func (h *DNSHandler) ServeDNS(rw fastdns.ResponseWriter, req *fastdns.Message) {
 		}
 	} else if bytes.Equal(req.Domain, hostC) {
 		switch req.Question.Type {
-		case fastdns.TypeA:
-			fastdns.HOST(rw, req, 60, []netip.Addr{netip.MustParseAddr("fcbb:cc00:3::a")})
+		// case fastdns.TypeA:
+		// 	fastdns.HOST(rw, req, 60, []netip.Addr{netip.MustParseAddr("fcbb:cc00:3::a")})
 		case fastdns.TypeAAAA:
 			fastdns.HOST(rw, req, 60, []netip.Addr{netip.MustParseAddr("fcbb:cc00:3::a")})
 		default:

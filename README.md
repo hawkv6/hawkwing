@@ -10,3 +10,6 @@ services:
         path: low-latency
     
 ```
+
+bpftool net show
+bpftool prog tracelog

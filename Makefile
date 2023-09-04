@@ -1,9 +1,9 @@
 # Copyright (c) 2023 Julian Klaiber
 
 GOCMD=go
-BINARY_NAME=fluvia
+BINARY_NAME=hawkwing
 CLANG ?= clang
-CFLAGS :=  -O2 -g -Wall $(CFLAGS)
+CFLAGS :=  -O2 -g -Wall $(CFLAGS) -DDEBUG
 
 GREEN  := $(shell tput -Txterm setaf 2)
 YELLOW := $(shell tput -Txterm setaf 3)
@@ -17,7 +17,7 @@ all: go-gen build ## Build the entire project
 
 install-deps: ## Install development dependencies
 	go install honnef.co/go/tools/cmd/staticcheck@latest
-	sudo apt install clang llvm gcc libbpf-dev linux-headers-$(uname -r)
+	sudo apt install clang clang-format llvm gcc libbpf-dev libelf-dev make linux-headers-$(uname -r)
 	sudo ln -s /usr/include/x86_64-linux-gnu/asm /usr/include/asm
 # https://github.com/xdp-project/xdp-tools
 # https://github.com/libbpf/bpftool/blob/master/README.md
@@ -31,7 +31,7 @@ clean: ## Clean build artifacts
 
 go-gen: export BPF_CLANG := $(CLANG)
 go-gen: export BPF_CFLAGS := $(CFLAGS)
-go-gen:
+go-gen: ## Generate BPF code and Go bindings
 	go generate ./...
 
 test: ## Run go tests
@@ -46,13 +46,14 @@ grpc-gen: ## Generate gRPC code
 	protoc -I ./api/proto --go_out=plugins=grpc:./api/proto ./api/proto/*.proto
 
 setup-network: ## Setup the development network environment
-	@sudo ./tools/network.sh -s
+	cd tools && sudo ./network.sh -s
 
 clean-network: ## Clean the development network environment
-	@sudo ./tools/network.sh -c
+	cd tools && sudo ./network.sh -c
 
 start-client: ## Start the client
 	@echo "Starting client..."
+	sudo ip netns exec ns-host-a ./out/bin/hawkwing
 
 start-server: ## Start the server
 	@echo "Starting server..."
@@ -60,6 +61,9 @@ start-server: ## Start the server
 start-controller: ## Start the controller
 	@echo "Starting controller..."
 
+fix-clang-style: ## Fix the clang style
+	find . -iname *.h -o -iname *.c | xargs clang-format -i
+	
 help: ## Show this help message
 	@echo ''
 	@echo 'Usage:'

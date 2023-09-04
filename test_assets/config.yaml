@@ -1,0 +1,16 @@
+---
+hawkeye:
+  hostname: hawkeye.hawk.net
+  port: 1234
+services:
+  web-b.hawk.net:
+    - intent: high-bandwidth
+      port: 80
+    - intent: low-bandwidth
+      port: 8080
+  db-c.hawk.net:
+    - intent: high-bandwidth
+      port: 1433
+      traffic-control: 
+        - fcbb:bb00:1::1
+        - fcbb:bb00:1::3
