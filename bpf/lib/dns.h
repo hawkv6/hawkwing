@@ -1,9 +1,9 @@
-#ifndef __DNS_H
-#define __DNS_H
+#ifndef __LIB_DNS_H
+#define __LIB_DNS_H
 
 #include <linux/in6.h>
 
-#define MAX_DNS_NAME_LENGTH 256
+#include "consts.h"
 
 struct dns_hdr {
 	__u16 transaction_id;
@@ -26,7 +26,7 @@ struct dns_hdr {
 struct dns_query {
 	__u16 record_type;
 	__u16 record_class;
-	char name[MAX_DNS_NAME_LENGTH];
+	char name[MAX_DNS_NAME_LEN];
 } __attribute__((packed));
 
 struct dns_answer {

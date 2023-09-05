@@ -1,5 +1,5 @@
-#ifndef __XDP_STRUCTS_H
-#define __XDP_STRUCTS_H
+#ifndef __LIB_CLIENT_H
+#define __LIB_CLIENT_H
 
 #include <linux/in6.h>
 #include <linux/types.h>
