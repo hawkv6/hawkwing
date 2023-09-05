@@ -12,6 +12,7 @@
 #include <bpf/bpf_helpers.h>
 
 #include "lib/dns.h"
+#include "lib/consts.h"
 #include "lib/maps.h"
 
 #define memcpy __builtin_memcpy
@@ -167,14 +168,14 @@ static int parse_dns_query(struct xdp_md *ctx, void *query_start,
 	// Fill dns_query.name with zero bytes
 	// Not doing so will make the verifier complain when dns_query is used as a
 	// key in bpf_map_lookup
-	for (i = 0; i < MAX_DNS_NAME_LENGTH; i++) {
+	for (i = 0; i < MAX_DNS_NAME_LEN; i++) {
 		q->name[i] = 0;
 	}
 	// Fill record_type and class with default values to satisfy verifier
 	q->record_type = 0;
 	q->record_class = 0;
 
-	for (i = 0; i < MAX_DNS_NAME_LENGTH; i++) {
+	for (i = 0; i < MAX_DNS_NAME_LEN; i++) {
 		// Boundary check of cursor. Verifier requires a +1 here.
 		// Probably because we are advancing the pointer at the end of the loop
 		if (cursor + 1 > data_end) {
