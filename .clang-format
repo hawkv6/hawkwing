@@ -1,4 +1,7 @@
 ---
+Language: Cpp
+BasedOnStyle: LLVM
+
 # Use tabs for indentation
 UseTab: Always
 TabWidth: 4

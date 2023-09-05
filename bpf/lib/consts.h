@@ -1,5 +1,5 @@
-#ifndef __XDP_CONSTS_H
-#define __XDP_CONSTS_H
+#ifndef __CONSTS_H
+#define __CONSTS_H
 
 #define MAX_MAP_ENTRIES 1024
 #define MAX_SEGMENTLIST_ENTRIES 10

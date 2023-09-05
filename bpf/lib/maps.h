@@ -1,7 +1,7 @@
-#ifndef __XDP_MAPS_H
-#define __XDP_MAPS_H
-#include "xdp_consts.h"
-#include "xdp_struct.h"
+#ifndef __MAPS_H
+#define __MAPS_H
+#include "client.h"
+#include "consts.h"
 #include <bpf/bpf_endian.h>
 #include <bpf/bpf_helpers.h>
 #include <linux/bpf.h>
