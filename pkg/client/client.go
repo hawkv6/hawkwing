@@ -1,42 +1,85 @@
 package client
 
 import (
-	"log"
-	"net"
+	"fmt"
+	"sync"
 
-	"github.com/cilium/ebpf/link"
-	"github.com/hawkv6/hawkwing/pkg/bpf"
+	"github.com/hawkv6/hawkwing/pkg/bpf/client"
+	"github.com/hawkv6/hawkwing/pkg/linker"
+	"github.com/hawkv6/hawkwing/pkg/logging"
+	"github.com/vishvananda/netlink"
 )
 
-func NewClient(interfaceName string) {
-	iface, err := net.InterfaceByName(interfaceName)
+var log = logging.DefaultLogger.WithField("subsystem", Subsystem)
+
+const (
+	Subsystem = "go-client"
+)
+
+type Client struct {
+	iface     netlink.Link
+	xdpLinker *linker.XdpLinker
+	tcLinker  *linker.TcLinker
+	wg        *sync.WaitGroup
+}
+
+func NewClient(interfaceName string) (*Client, error) {
+	iface, err := netlink.LinkByName(interfaceName)
 	if err != nil {
-		log.Fatalf("Could not lookup network iface %q: %s", interfaceName, err)
+		return nil, fmt.Errorf("could not lookup network iface %q: %s", interfaceName, err)
 	}
-
-	objs, err := bpf.ReadBpfObjects(nil)
+	xdpObjs, err := client.ReadClientXdpObjects(nil)
 	if err != nil {
-		log.Fatalf("Could not load XDP program: %s", err)
+		return nil, fmt.Errorf("could not load XDP program: %s", err)
 	}
-	defer objs.Close()
-
-	l, err := link.AttachXDP(link.XDPOptions{
-		Program:   objs.InterceptDns,
-		Interface: iface.Index,
-		Flags:     link.XDPGenericMode,
-	})
-
+	xdpLinker := linker.NewXdpLinker(iface, xdpObjs.InterceptDns)
+	tcObjs, err := client.ReadClientTcObjects(nil)
 	if err != nil {
-		log.Fatalf("Could not attach XDP program: %s", err)
+		return nil, fmt.Errorf("could not load TC program: %s", err)
 	}
-	defer l.Close()
+	tcLinker := linker.NewTcLinker(iface, tcObjs.EncapEgress)
 
-	log.Printf("Attached XDP program to iface %q (index %d)", iface.Name, iface.Index)
-	log.Printf("Press Ctrl-C to exit and remove the program")
-
-	err = bpf.InitializeBpfMap(objs.ClientMap)
+	// TODO change this
+	err = client.InitializeBpfMap(xdpObjs.ClientMap)
 	if err != nil {
 		log.Fatalf("Could not initialize BPF map: %s", err)
 	}
-	select {}
+
+	return &Client{
+		iface:     iface,
+		xdpLinker: xdpLinker,
+		tcLinker:  tcLinker,
+		wg:        &sync.WaitGroup{},
+	}, nil
+}
+
+func (c *Client) Start() {
+	c.wg.Add(2)
+
+	go func() {
+		defer c.wg.Done()
+		if err := c.xdpLinker.Attach(); err != nil {
+			log.WithError(err).Error("couldn't attach XDP program")
+		}
+	}()
+
+	go func() {
+		defer c.wg.Done()
+		if err := c.tcLinker.Attach(); err != nil {
+			log.WithError(err).Error("couldn't attach TC program")
+		}
+	}()
+
+	log.Printf("Attached XDP program to iface %q", c.iface.Attrs().Name)
+	log.Printf("Press Ctrl-C to exit and remove the program")
+}
+
+func (c *Client) Stop() {
+	if err := c.xdpLinker.Detach(); err != nil {
+		log.WithError(err).Error("couldn't detach XDP program")
+	}
+	if err := c.tcLinker.Detach(); err != nil {
+		log.WithError(err).Error("couldn't detach TC program")
+	}
+	c.wg.Wait()
 }
