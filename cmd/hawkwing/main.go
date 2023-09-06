@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/hawkv6/hawkwing/internal/version"
 	"github.com/hawkv6/hawkwing/pkg/client"
@@ -22,9 +24,21 @@ var rootCmd = &cobra.Command{
 	Complete documentation is available at https://github.com/hawkv6/hawkwing
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("Hello World")
-		go client.NewTcClient("host-a")
-		client.NewClient("host-a")
+		client, err := client.NewClient("host-a")
+		if err != nil {
+			fmt.Println(err)
+		}
+		client.Start()
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+		<-c
+
+		client.Stop()
+		fmt.Println("Hawkwing stopped")
+
+		// fmt.Println("Hello World")
+		// go client.NewTcClient("host-a")
+		// client.NewClient("host-a")
 	},
 }
 
