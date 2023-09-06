@@ -23,6 +23,7 @@ var rootCmd = &cobra.Command{
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Hello World")
+		go client.NewTcClient("host-a")
 		client.NewClient("host-a")
 	},
 }

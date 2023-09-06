@@ -8,7 +8,8 @@ import (
 	"github.com/cilium/ebpf"
 )
 
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -no-global-types -cc $BPF_CLANG -cflags $BPF_CFLAGS bpf ../../bpf/bpf_dns.c -- -I../../bpf
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -no-global-types -cc $BPF_CLANG -cflags $BPF_CFLAGS xdp ../../bpf/bpf_dns.c -- -I../../bpf
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -no-global-types -cc $BPF_CLANG -cflags $BPF_CFLAGS tc ../../bpf/bpf_seg6.c -- -I../../bpf
 
 type ClientData struct {
 	DstPort  uint16
@@ -17,9 +18,18 @@ type ClientData struct {
 	Segments [10]struct{ In6U struct{ U6Addr8 [16]uint8 } }
 }
 
-func ReadBpfObjects(ops *ebpf.CollectionOptions) (*bpfObjects, error) {
-	obj := &bpfObjects{}
-	err := loadBpfObjects(obj, ops)
+func ReadBpfObjects(ops *ebpf.CollectionOptions) (*xdpObjects, error) {
+	obj := &xdpObjects{}
+	err := loadXdpObjects(obj, ops)
+	if err != nil {
+		return nil, err
+	}
+	return obj, nil
+}
+
+func ReadTcObjects(ops *ebpf.CollectionOptions) (*tcObjects, error) {
+	obj := &tcObjects{}
+	err := loadTcObjects(obj, ops)
 	if err != nil {
 		return nil, err
 	}
