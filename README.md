@@ -13,3 +13,6 @@ services:
 
 bpftool net show
 bpftool prog tracelog
+
+
+mount --make-shared /sys/fs/bpf

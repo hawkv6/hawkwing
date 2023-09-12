@@ -12,6 +12,8 @@ import (
 	"github.com/cilium/ebpf"
 )
 
+type tcIn6Addr struct{ In6U struct{ U6Addr8 [16]uint8 } }
+
 // loadTc returns the embedded CollectionSpec for tc.
 func loadTc() (*ebpf.CollectionSpec, error) {
 	reader := bytes.NewReader(_TcBytes)
@@ -60,6 +62,10 @@ type tcProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type tcMapSpecs struct {
+	ClientInnerMap   *ebpf.MapSpec `ebpf:"client_inner_map"`
+	ClientLookupMap  *ebpf.MapSpec `ebpf:"client_lookup_map"`
+	ClientOuterMap   *ebpf.MapSpec `ebpf:"client_outer_map"`
+	ClientReverseMap *ebpf.MapSpec `ebpf:"client_reverse_map"`
 }
 
 // tcObjects contains all objects after they have been loaded into the kernel.
@@ -81,10 +87,19 @@ func (o *tcObjects) Close() error {
 //
 // It can be passed to loadTcObjects or ebpf.CollectionSpec.LoadAndAssign.
 type tcMaps struct {
+	ClientInnerMap   *ebpf.Map `ebpf:"client_inner_map"`
+	ClientLookupMap  *ebpf.Map `ebpf:"client_lookup_map"`
+	ClientOuterMap   *ebpf.Map `ebpf:"client_outer_map"`
+	ClientReverseMap *ebpf.Map `ebpf:"client_reverse_map"`
 }
 
 func (m *tcMaps) Close() error {
-	return _TcClose()
+	return _TcClose(
+		m.ClientInnerMap,
+		m.ClientLookupMap,
+		m.ClientOuterMap,
+		m.ClientReverseMap,
+	)
 }
 
 // tcPrograms contains all programs after they have been loaded into the kernel.
