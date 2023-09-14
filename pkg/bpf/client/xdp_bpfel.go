@@ -12,6 +12,8 @@ import (
 	"github.com/cilium/ebpf"
 )
 
+type xdpIn6Addr struct{ In6U struct{ U6Addr8 [16]uint8 } }
+
 // loadXdp returns the embedded CollectionSpec for xdp.
 func loadXdp() (*ebpf.CollectionSpec, error) {
 	reader := bytes.NewReader(_XdpBytes)
@@ -60,8 +62,10 @@ type xdpProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type xdpMapSpecs struct {
-	ClientMap *ebpf.MapSpec `ebpf:"client_map"`
-	TestMap   *ebpf.MapSpec `ebpf:"test_map"`
+	ClientInnerMap   *ebpf.MapSpec `ebpf:"client_inner_map"`
+	ClientLookupMap  *ebpf.MapSpec `ebpf:"client_lookup_map"`
+	ClientOuterMap   *ebpf.MapSpec `ebpf:"client_outer_map"`
+	ClientReverseMap *ebpf.MapSpec `ebpf:"client_reverse_map"`
 }
 
 // xdpObjects contains all objects after they have been loaded into the kernel.
@@ -83,14 +87,18 @@ func (o *xdpObjects) Close() error {
 //
 // It can be passed to loadXdpObjects or ebpf.CollectionSpec.LoadAndAssign.
 type xdpMaps struct {
-	ClientMap *ebpf.Map `ebpf:"client_map"`
-	TestMap   *ebpf.Map `ebpf:"test_map"`
+	ClientInnerMap   *ebpf.Map `ebpf:"client_inner_map"`
+	ClientLookupMap  *ebpf.Map `ebpf:"client_lookup_map"`
+	ClientOuterMap   *ebpf.Map `ebpf:"client_outer_map"`
+	ClientReverseMap *ebpf.Map `ebpf:"client_reverse_map"`
 }
 
 func (m *xdpMaps) Close() error {
 	return _XdpClose(
-		m.ClientMap,
-		m.TestMap,
+		m.ClientInnerMap,
+		m.ClientLookupMap,
+		m.ClientOuterMap,
+		m.ClientReverseMap,
 	)
 }
 

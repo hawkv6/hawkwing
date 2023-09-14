@@ -19,12 +19,13 @@ fi
 
 # Function to display help/usage message
 usage() {
-    echo -e "${YELLOW}Usage:${NC} $0 [-h] [-s] [-c] [-i] [-n]"
+    echo -e "${YELLOW}Usage:${NC} $0 [-h] [-s] [-c] [-i] [-n] [-p]"
     echo "  -h                  Display this help message"
     echo "  -s                  Start the network"
     echo "  -c                  Clean the network"
     echo "  -i [process]        Interact with VPP"
     echo "  -n [namespace]      Open a shell in the specified namespace"
+    echo "  -p                  Start the application"
     exit 1
 }
 
@@ -70,8 +71,14 @@ start_webservers() {
     echo -e "${GREEN}Webservers started successfully${NC}"
 }
 
+start_application() {
+    echo -e "${GREEN}Starting application...${NC}"
+    mount -t bpf bpf /sys/fs/bpf
+    cd .. && ./out/bin/hawkwing --config ./test_assets/config.yaml
+}
+
 # Parse arguments
-while getopts ":hsci:n:" opt; do
+while getopts ":hsci:n:p" opt; do
     case $opt in
         s)
             start_network
@@ -84,6 +91,9 @@ while getopts ":hsci:n:" opt; do
             ;;
         n)
             open_namespace_shell $OPTARG
+            ;;
+        p)
+            start_application
             ;;
         h)
             usage

@@ -31,19 +31,22 @@ rectangle "HawkWing | End-to-End SRv6" {
     
     
 }
-server --> UC5 : trigger
-server --> UC6 : trigger
 
 admin --> UC1 : configures
 client --> UC4 : initialize
 client --> UC2 : trigger
 client --> UC3 : trigger
 client --> UC6 : trigger
- 
+
+server --> UC5 : trigger
+server --> UC6 : trigger
+
+client -[hidden]> server
+dirService -[hidden]> UC3
 
 
 UC1 ..> UC3 : supplies GRPC Server Configuration
-UC1 ..> UC4 : supplies Domain Name and Port
+UC1 ..> UC4 : supplies SID List, Domain Name, Port
 UC2 ..> UC4 : supplies IPv6 Address
 UC3 ..> UC4 : supplies SID List
 UC6 <.. UC4 : supplies Encapsulation Information

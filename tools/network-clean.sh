@@ -35,3 +35,9 @@ ip link del dev br-56
 ip link del dev br-a1
 ip link del dev br-b6
 ip link del dev br-c6
+
+# Remove veth pairs
+ip link del dev host-a
+ip link del dev host-b
+ip link del dev host-c
+ip link del dev dns

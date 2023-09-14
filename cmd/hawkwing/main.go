@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/hawkv6/hawkwing/internal/config"
 	"github.com/hawkv6/hawkwing/internal/version"
 	"github.com/hawkv6/hawkwing/pkg/client"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -34,16 +35,11 @@ var rootCmd = &cobra.Command{
 		<-c
 
 		client.Stop()
-		fmt.Println("Hawkwing stopped")
-
-		// fmt.Println("Hello World")
-		// go client.NewTcClient("host-a")
-		// client.NewClient("host-a")
+		fmt.Println("\nHawkwing stopped")
 	},
 }
 
 func init() {
-
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./config.yaml)")
 	rootCmd.Flags().BoolVarP(&versionFlag, "version", "v", false, "Print the version number of hawkwing")
 
@@ -59,12 +55,19 @@ func init() {
 
 func initConfig() {
 	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
+		config.GetInstance().SetConfigFile(cfgFile)
 	}
 
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Println(err)
+	if err := config.Parse(); err != nil {
+		log.Fatalln(err)
+	}
+}
+
+// TODO implement it proberly
+func checkIsRoot() {
+	if os.Geteuid() != 0 {
+		fmt.Println("Hawkwing must be run as root")
+		os.Exit(1)
 	}
 }
 

@@ -53,7 +53,7 @@ clean-network: ## Clean the development network environment
 
 start-client: ## Start the client
 	@echo "Starting client..."
-	sudo ip netns exec ns-host-a ./out/bin/hawkwing
+	cd tools && sudo ip netns exec ns-host-a ./network.sh -p
 
 start-server: ## Start the server
 	@echo "Starting server..."
