@@ -74,7 +74,7 @@ start_webservers() {
 start_application() {
     echo -e "${GREEN}Starting application...${NC}"
     mount -t bpf bpf /sys/fs/bpf
-    cd .. && ./out/bin/hawkwing
+    cd .. && ./out/bin/hawkwing --config ./test_assets/config.yaml
 }
 
 # Parse arguments

@@ -24,13 +24,6 @@ type Client struct {
 	wg        *sync.WaitGroup
 }
 
-const (
-	clientReverseMapPath = "/sys/fs/bpf/client_reverse_map"
-	clientInnerMapPath   = "/sys/fs/bpf/client_inner_map"
-	clientOuterMapPath   = "/sys/fs/bpf/client_outer_map"
-	clientMapPath        = "/sys/fs/bpf/client_map"
-)
-
 func NewClient(interfaceName string) (*Client, error) {
 	iface, err := netlink.LinkByName(interfaceName)
 	if err != nil {
@@ -53,23 +46,11 @@ func NewClient(interfaceName string) (*Client, error) {
 		log.Fatalf("Could not mount BPF filesystem: %s", err)
 	}
 
-	// err = client.InitializeBpfMap(xdpObjs.ClientMap)
-	// if err != nil {
-	// 	log.Fatalf("Could not initialize BPF map: %s", err)
-	// }
-	// err = client.InitializeInnerMap(xdpObjs.ClientInnerMap, xdpObjs.ClientInnerMap)
-	// if err != nil {
-	// 	log.Fatalf("Could not initialize BPF map: %s", err)
-	// }
-	// innerMap1, innerMap2, err := client.CreateInnerMaps()
-	// if err != nil {
-	// 	log.Fatalf("Could not create inner maps: %s", err)
-	// }
-	// err = client.InitializeOuterMap(xdpObjs.ClientOuterMap, innerMap1, innerMap2)
-	// if err != nil {
-	// 	log.Fatalf("Could not initialize BPF map: %s", err)
-	// }
-	_ = client.Hope()
+	clientMap := bpf.NewClientMap()
+	err = clientMap.CreateClientDataMaps()
+	if err != nil {
+		log.Fatalf("Could not create client data maps: %s", err)
+	}
 
 	return &Client{
 		iface:     iface,

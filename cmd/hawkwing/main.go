@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/hawkv6/hawkwing/internal/config"
 	"github.com/hawkv6/hawkwing/internal/version"
 	"github.com/hawkv6/hawkwing/pkg/client"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -58,13 +59,23 @@ func init() {
 }
 
 func initConfig() {
+	// if cfgFile != "" {
+	// 	// Use config file from the flag.
+	// 	viper.SetConfigFile(cfgFile)
+	// }
+
+	// if err := viper.ReadInConfig(); err != nil {
+	// 	fmt.Println(err)
+	// }
+
 	if cfgFile != "" {
 		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
+		config.GetInstance().SetConfigFile(cfgFile)
 	}
 
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Println(err)
+	// Parse the configuration
+	if err := config.Parse(); err != nil {
+		log.Fatalln(err)
 	}
 }
 

@@ -107,21 +107,40 @@ int intercept_dns(struct xdp_md *ctx)
 	}
 
 	/*
+	Check if there is an entry for the extraced domain in the client_lookup_map
+	When yes print the value which is the id.
+	When no go ahead	
+	*/
+	__u32 *domain_id;
+	domain_id = bpf_map_lookup_elem(&client_lookup_map, query.name);
+	if (!domain_id) {
+#ifdef DEBUG
+		bpf_printk("[xdp] no entry found for %s\n in client_lookup_map", query.name);
+#endif
+		return XDP_PASS;
+	}
+	#ifdef DEBUG
+		bpf_printk("[xdp] found entry for %s\n in client_lookup_map with id: %d\n", query.name, *domain_id);
+	#endif
+
+	/*
 	Check if there is an entry for the extracted domain name in the outer map.
 	If there is no entry, we stop here.
 	If there is an entry, we add the IPv6 address as key and the domain name as value in the reverse map.
 	*/
-	__u32 *inner_map_ptr;
-	inner_map_ptr = bpf_map_lookup_elem(&client_outer_map, query.name);
-	if (!inner_map_ptr) {
-#ifdef DEBUG
-		bpf_printk("[xdp] no entry found for %s\n in outer map", query.name);
-#endif
-		return XDP_PASS;
-	}
-	bpf_map_update_elem(&client_reverse_map, &dns_answer.ipv6_address, query.name, BPF_ANY);
+// 	__u32 *inner_map_ptr;
+// 	inner_map_ptr = bpf_map_lookup_elem(&client_outer_map, query.name);
+// 	if (!inner_map_ptr) {
+// #ifdef DEBUG
+// 		bpf_printk("[xdp] no entry found for %s\n in outer map", query.name);
+// #endif
+// 		return XDP_PASS;
+// 	}
+
+
+	bpf_map_update_elem(&client_reverse_map, &dns_answer.ipv6_address, domain_id, BPF_ANY);
 	#ifdef DEBUG
-		bpf_printk("[xdp] updated reverse map with IPv6 and domain name: %s\n", query.name);
+		bpf_printk("[xdp] updated reverse map with ipv6 address for domain id: %d\n", *domain_id);
 	#endif
 
 	// TODO not needed anymore

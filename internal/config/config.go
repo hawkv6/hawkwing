@@ -1,28 +1,25 @@
 package config
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/spf13/viper"
 )
 
-var viperInstance = viper.New()
-
-var Params Config
+var (
+	viperInstance = viper.NewWithOptions(viper.KeyDelimiter("\\"))
+	Params        Config
+)
 
 type HawkEyeConfig struct {
 	Hostname string
 	Port     int
 }
 
-type TrafficControlConfig struct {
-	Sid []string
-}
-
 type ServiceConfig struct {
-	Intent         string
-	Port           int
-	TrafficControl TrafficControlConfig
+	Intent string
+	Port   int
+	Sid    []string
 }
 
 type Config struct {
@@ -30,33 +27,24 @@ type Config struct {
 	Services map[string][]ServiceConfig
 }
 
-func ReadConfig(cfgFile string) error {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viperInstance.SetConfigFile(cfgFile)
-	} else {
-		// Look for config in the working directory with name "config" (without extension).
-		viperInstance.AddConfigPath(".")
-		viperInstance.SetConfigType("yaml")
-		viperInstance.SetConfigName("config")
-	}
-
+func init() {
 	viperInstance.SetEnvPrefix("HAWKING")
 	viperInstance.AutomaticEnv()
+}
 
-	err := viperInstance.ReadInConfig()
-	if err != nil {
-		return err
-	} else {
-		log.Println("Using config file:", viperInstance.ConfigFileUsed())
+func Parse() error {
+	if len(viperInstance.ConfigFileUsed()) != 0 {
+		if err := viperInstance.ReadInConfig(); err != nil {
+			return fmt.Errorf("failed to load config file %s: %v", viperInstance.ConfigFileUsed(), err)
+		}
 	}
 
-	err = viperInstance.Unmarshal(&Params)
-	if err != nil {
-		return err
+	if err := viperInstance.UnmarshalExact(&Params); err != nil {
+		return fmt.Errorf("failed to parse config: %v", err)
 	}
 
-	return err
+	return nil
+
 }
 
 func GetInstance() *viper.Viper {

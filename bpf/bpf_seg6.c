@@ -56,58 +56,45 @@ int encap_egress(struct __sk_buff *skb)
 	}
 
     /*
-    Check if there is an entry for the dstaddr in the reverse map. 
-    If there is, we can continue.
-    If there isn't, we can let the packet pass.
+	Check if there is an entry for the dstaddr in the client_reverse_map
+	Value should be an __u32 domain_id
     */
-    char *domain_name;
-    domain_name = bpf_map_lookup_elem(&client_reverse_map, &ipv6->daddr);
-	if (!domain_name) {
+	__u32 *domain_id = bpf_map_lookup_elem(&client_reverse_map, &ipv6->daddr);
+	if (!domain_id) {
 #ifdef DEBUG
 		bpf_printk("[tc-egress] no entry in reverse map\n");
 #endif
 		return TC_ACT_OK;
 	}
-    bpf_printk("[tc-egress] domain_name: %s\n", domain_name);
 
-    /*
-    Check if there is an entry for the dstport in the inner map.
-    If there is, we can continue.
-    If there isn't, we can let the packet pass.
-    */ 
-	__u32 *inner_map_pointer;
-	inner_map_pointer = bpf_map_lookup_elem(&client_outer_map, domain_name);
-	if (!inner_map_pointer) {
+	/*
+	Check if there is an inner_map for the domain_id in the client_outer_map	
+	*/
+	struct bpf_elf_map *inner_map = bpf_map_lookup_elem(&client_outer_map, domain_id);
+	if (!inner_map) {
 #ifdef DEBUG
-		bpf_printk("[tc-egress] no entry in inner map\n");
+		bpf_printk("[tc-egress] no inner map for domain_id\n");
 #endif
 		return TC_ACT_OK;
 	}
 
 	/*
-	Check if the destination port of tcp is available as key in the inner map.
+	Check if there is an entry for __u16 80 in the innermap
+	value is struct in6_addr[MAX_SEGMENT_LIST_ENTRIES]
+	print the second in6_addr
 	*/
-	// int mapfd;
-	// mapfd = bpf_obj_get(inner_map_pointer);
-	struct bpf_map_def *inner_map;
-	inner_map = bpf_map_lookup_elem(&client_outer_map, domain_name);
-	if (!inner_map) {
+	__u16 port = 80;
+	struct in6_addr *segment_list = bpf_map_lookup_elem(inner_map, &port);
+	if (!segment_list) {
 #ifdef DEBUG
-		bpf_printk("[tc-egress] no entry in inner map\n");
+		bpf_printk("[tc-egress] no segment list for port 80\n");
 #endif
 		return TC_ACT_OK;
 	}
+	bpf_printk("[tc-egress] segment list for port 80: %pI6\n", segment_list);
+	bpf_printk("[tc-egress] segment list for port 80: %pI6\n", segment_list + 1);
 
-// 	__u16 dstport = 80;
-// 	__u16 *key = &dstport;
-// 	struct in6_addr (*segments)[MAX_SEGMENTLIST_ENTRIES];
-// 	segments = bpf_map_lookup_elem(&inner_map, key);
-// 	if (!segments) {
-// #ifdef DEBUG
-// 		bpf_printk("[tc-egress] no entry in inner map\n");
-// #endif
-// 		return TC_ACT_OK;
-// 	}
+
 
 
 	bpf_printk("[tc-egress] FINISHED\n");

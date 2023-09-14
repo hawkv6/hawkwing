@@ -8,14 +8,6 @@
 #include <linux/if_ether.h>
 #include <linux/types.h>
 
-// struct {
-// 	__uint(type, BPF_MAP_TYPE_LRU_HASH);
-// 	__uint(max_entries, MAX_MAP_ENTRIES);
-// 	__type(key, char[MAX_DNS_NAME_LEN]);
-// 	__type(value, struct client_data);
-// 	__uint(pinning, LIBBPF_PIN_BY_NAME);
-// } client_map SEC(".maps");
-
 struct client_inner_map {
 	__uint(type, BPF_MAP_TYPE_LRU_HASH);
 	__uint(max_entries, MAX_MAP_ENTRIES);
@@ -50,6 +42,7 @@ struct {
 	__uint(max_entries, MAX_MAP_ENTRIES);
 	__type(key, char[MAX_DNS_NAME_LEN]);
 	__type(value, __u32); // key to store in client_reverse_map
+	__uint(pinning, LIBBPF_PIN_BY_NAME);
 } client_lookup_map SEC(".maps");
 
 #endif

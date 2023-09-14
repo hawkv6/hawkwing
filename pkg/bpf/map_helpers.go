@@ -2,10 +2,12 @@ package bpf
 
 import (
 	"fmt"
+	"net"
 	"strings"
 )
 
-// formatDNSName formats a DNS name into a byte array that can be used as a key
+// FormatDNSName takes a domain name and converts it into a dns name.
+// This function is used to convert the domain name into a format that can be used as a key in the BPF map.
 func FormatDNSName(domain string) ([256]byte, error) {
 	var result [256]byte
 	labels := strings.Split(domain, ".")
@@ -32,4 +34,18 @@ func FormatDNSName(domain string) ([256]byte, error) {
 	offset++
 
 	return result, nil
+}
+
+// SidToInet6Sid takes a list of IPv6 addresses and converts them into a list of inet6 addresses
+// This function is used to convert the list of IPv6 addresses into a format that can be used as a value in the BPF map.
+func SidToInet6Sid(sidList []string) [10]struct{ in6U struct{ u6Addr8 [16]uint8 } } {
+	var result [10]struct{ in6U struct{ u6Addr8 [16]uint8 } }
+	for i, sid := range sidList {
+		ipv6 := net.ParseIP(sid)
+		// var inner struct{ in6U struct{ u6Addr8 [16]uint8 } }
+		// copy(inner.in6U.u6Addr8[:], ipv6.To16())
+		// result = append(result, inner)
+		copy(result[i].in6U.u6Addr8[:], ipv6.To16())
+	}
+	return result
 }
