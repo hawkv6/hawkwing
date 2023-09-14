@@ -7,6 +7,7 @@ import (
 )
 
 var (
+	// Use \ as key delimiter because we have . in the key
 	viperInstance = viper.NewWithOptions(viper.KeyDelimiter("\\"))
 	Params        Config
 )
@@ -28,7 +29,7 @@ type Config struct {
 }
 
 func init() {
-	viperInstance.SetEnvPrefix("HAWKING")
+	viperInstance.SetEnvPrefix("HAWKWING")
 	viperInstance.AutomaticEnv()
 }
 
@@ -44,7 +45,6 @@ func Parse() error {
 	}
 
 	return nil
-
 }
 
 func GetInstance() *viper.Viper {

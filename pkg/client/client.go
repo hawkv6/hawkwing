@@ -38,7 +38,7 @@ func NewClient(interfaceName string) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not load TC program: %s", err)
 	}
-	tcLinker := linker.NewTcLinker(iface, tcObjs.EncapEgress)
+	tcLinker := linker.NewTcLinker(iface, tcObjs.FilterEgress)
 
 	// TODO change this
 	err = bpf.Mount()

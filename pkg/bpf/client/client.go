@@ -5,8 +5,8 @@ import (
 	"github.com/hawkv6/hawkwing/pkg/bpf"
 )
 
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc $BPF_CLANG -cflags $BPF_CFLAGS xdp ../../../bpf/bpf_dns.c -- -I../../../bpf
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc $BPF_CLANG -cflags $BPF_CFLAGS tc ../../../bpf/bpf_seg6.c -- -I../../../bpf
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc $BPF_CLANG -cflags $BPF_CFLAGS xdp ../../../bpf/bpf_client_ingress.c -- -I../../../bpf
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc $BPF_CLANG -cflags $BPF_CFLAGS tc ../../../bpf/bpf_client_egress.c -- -I../../../bpf
 
 // ReadClientXdpObjects reads the XDP objects from the BPF filesystem.
 func ReadClientXdpObjects() (*xdpObjects, error) {
