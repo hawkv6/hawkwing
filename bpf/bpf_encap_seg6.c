@@ -18,9 +18,6 @@
 
 #define memcpy __builtin_memcpy
 
-char _license[] SEC("license") = "GPL";
-
-SEC("tc-encap")
 int encap_seg6(struct __sk_buff *skb)
 {
     bpf_printk("Tailcal Sucessful!\n");
