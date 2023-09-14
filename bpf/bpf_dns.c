@@ -87,14 +87,6 @@ int intercept_dns(struct xdp_md *ctx)
 		return XDP_PASS;
 	}
 
-	// Check if the query is an AAAA query (IPv6 query) dns record type 28
-// 	if (query.record_type != 28) {
-// #ifdef DEBUG
-// 		bpf_printk("[xdp] not an AAAA query");
-// #endif
-// 		return XDP_PASS;
-// 	}
-
 	// Parse the DNS answer
 	struct dns_answer dns_answer;
 	int dns_answer_result =
@@ -109,62 +101,29 @@ int intercept_dns(struct xdp_md *ctx)
 	/*
 	Check if there is an entry for the extraced domain in the client_lookup_map
 	When yes print the value which is the id.
-	When no go ahead	
+	When no go ahead
 	*/
 	__u32 *domain_id;
 	domain_id = bpf_map_lookup_elem(&client_lookup_map, query.name);
 	if (!domain_id) {
 #ifdef DEBUG
-		bpf_printk("[xdp] no entry found for %s\n in client_lookup_map", query.name);
+		bpf_printk("[xdp] no entry found for %s\n in client_lookup_map",
+				   query.name);
 #endif
 		return XDP_PASS;
 	}
-	#ifdef DEBUG
-		bpf_printk("[xdp] found entry for %s\n in client_lookup_map with id: %d\n", query.name, *domain_id);
-	#endif
+#ifdef DEBUG
+	bpf_printk("[xdp] found entry for %s\n in client_lookup_map with id: %d\n",
+			   query.name, *domain_id);
+#endif
 
-	/*
-	Check if there is an entry for the extracted domain name in the outer map.
-	If there is no entry, we stop here.
-	If there is an entry, we add the IPv6 address as key and the domain name as value in the reverse map.
-	*/
-// 	__u32 *inner_map_ptr;
-// 	inner_map_ptr = bpf_map_lookup_elem(&client_outer_map, query.name);
-// 	if (!inner_map_ptr) {
-// #ifdef DEBUG
-// 		bpf_printk("[xdp] no entry found for %s\n in outer map", query.name);
-// #endif
-// 		return XDP_PASS;
-// 	}
-
-
-	bpf_map_update_elem(&client_reverse_map, &dns_answer.ipv6_address, domain_id, BPF_ANY);
-	#ifdef DEBUG
-		bpf_printk("[xdp] updated reverse map with ipv6 address for domain id: %d\n", *domain_id);
-	#endif
-
-	// TODO not needed anymore
-	// Check if there is an entry with that domain name in the map
-	// If there is no entry, we stop here
-// 	struct client_data *client_data;
-// 	client_data = bpf_map_lookup_elem(&client_map, query.name);
-// 	if (!client_data) {
-// #ifdef DEBUG
-// 		bpf_printk("No entry found for %s\n", query.name);
-// #endif
-// 		return XDP_PASS;
-// 	}
-
-// #ifdef DEBUG
-// 	bpf_printk("Found entry for %s\n", query.name);
-// #endif
-
-// 	client_data->dstaddr = dns_answer.ipv6_address;
-// 	bpf_map_update_elem(&client_map, query.name, client_data, BPF_EXIST);
-
-// #ifdef DEBUG
-// 	bpf_printk("Updated IPv6 address for domain name: %s\n", query.name);
-// #endif
+	bpf_map_update_elem(&client_reverse_map, &dns_answer.ipv6_address,
+						domain_id, BPF_ANY);
+#ifdef DEBUG
+	bpf_printk(
+		"[xdp] updated reverse map with ipv6 address for domain id: %d\n",
+		*domain_id);
+#endif
 
 	return XDP_PASS;
 }
