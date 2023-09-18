@@ -8,7 +8,7 @@ services:
       port: 80 # 50 00
       sid: 
         - fcbb:bb00:1::1
-        - fcbb:bb00:1::3
+        - fcbb:bb00:3::1
     - intent: low-bandwidth
       port: 8080 # 90 1f
   wc.hawk.net:
@@ -16,4 +16,4 @@ services:
       port: 1433 # 99 05
       sid: 
         - fcbb:bb00:1::1
-        - fcbb:bb00:1::3
+        - fcbb:bb00:3::1
