@@ -123,7 +123,7 @@ int filter_egress(struct __sk_buff *skb)
 	int hdr_ext_len = (sizeof(struct srv6_hdr) + sizeof(struct in6_addr) * num_sids - 8)/8;
 	srv6.hdr_ext_len = hdr_ext_len;
 	srv6.routing_type = SRV6_ROUTING_TYPE;
-	srv6.segments_left = num_sids - 2;
+	srv6.segments_left = num_sids - 1;
 	srv6.last_entry = num_sids - 1;
 
 	// copy ipv6 dstaddr to sids[0]
