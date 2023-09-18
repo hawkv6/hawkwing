@@ -153,6 +153,8 @@ $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock ip route add fcbb:aa00:3::/48 via 
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock ip route add fcbb:aa00:3::/48 via 2001:db8:13::3
 # static routing to beyond-ctrl
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock ip route add fcbb:cc00:5::/48 via 2001:db8:12::2
+# configure srv6 bsid with end behavior
+$VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp1.sock sr localsid address fcbb:bb00:1::2 behavior end
 
 ### Configure vpp2
 # loop0
@@ -188,6 +190,8 @@ $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp2.sock ip route add fcbb:cc00:3::/48 via 
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp2.sock ip route add fcbb:aa00:3::/48 via 2001:db8:24::4
 # static routing to beyond-ctrl
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp2.sock ip route add fcbb:cc00:5::/48 via 2001:db8:24::4
+# configure srv6 bsid with end behavior
+$VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp2.sock sr localsid address fcbb:bb00:2::2 behavior end
 
 ### Configure vpp3
 # loop0
@@ -224,6 +228,8 @@ $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp3.sock ip route add fcbb:aa00:3::/48 via 
 # static routing to beyond-ctrl
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp3.sock ip route add fcbb:cc00:5::/48 via 2001:db8:13::1
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp3.sock ip route add fcbb:cc00:5::/48 via 2001:db8:35::5
+# configure srv6 bsid with end behavior
+$VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp3.sock sr localsid address fcbb:bb00:3::2 behavior end
 
 ### Configure vpp4
 # loop0
@@ -264,6 +270,8 @@ $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp4.sock ip route add fcbb:cc00:3::/48 via 
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp4.sock ip route add fcbb:aa00:3::/48 via 2001:db8:46::6
 # static routing to beyond-ctrl
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp4.sock ip route add fcbb:cc00:5::/48 via 2001:db8:f4::f
+# configure srv6 bsid with end behavior
+$VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp4.sock sr localsid address fcbb:bb00:4::2 behavior end
 
 ### Configure vpp5
 # loop0
@@ -299,6 +307,8 @@ $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp5.sock ip route add fcbb:cc00:3::/48 via 
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp5.sock ip route add fcbb:aa00:3::/48 via 2001:db8:56::6
 # static routing to beyond-ctrl
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp5.sock ip route add fcbb:cc00:5::/48 via 2001:db8:56::6
+# configure srv6 bsid with end behavior
+$VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp5.sock sr localsid address fcbb:bb00:5::2 behavior end
 
 ### Configure vpp6
 # loop0
@@ -346,6 +356,8 @@ $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp6.sock ip route add fcbb:cc00:3::/48 via 
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp6.sock ip route add fcbb:aa00:3::/48 via 2001:db8:c6::c
 # static routing to beyond-ctrl
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp6.sock ip route add fcbb:cc00:5::/48 via 2001:db8:46::4
+# configure srv6 bsid with end behavior
+$VPPCTL_BINARY_PATH -s /run/vpp/cli.vpp6.sock sr localsid address fcbb:bb00:6::2 behavior end
 
 ### Configure site-a
 # loop0
@@ -382,6 +394,8 @@ $VPPCTL_BINARY_PATH -s /run/vpp/cli.site-a.sock ip route add fcbb:aa00:3::/48 vi
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.site-a.sock ip route add fcbb:cc00:3::/48 via 2001:db8:a1::1
 # static routing to beyond-ctrl
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.site-a.sock ip route add fcbb:cc00:5::/48 via 2001:db8:a1::1
+# configure srv6 bsid with end behavior
+$VPPCTL_BINARY_PATH -s /run/vpp/cli.site-a.sock sr localsid address fcbb:aa00:1::2 behavior end
 
 ### Configure site-b
 # loop0
@@ -411,6 +425,8 @@ $VPPCTL_BINARY_PATH -s /run/vpp/cli.site-b.sock ip route add fcbb:cc00:3::/48 vi
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.site-b.sock ip route add fcbb:aa00:3::/48 via 2001:db8:b6::6
 # static routing to beyond-ctrl
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.site-b.sock ip route add fcbb:cc00:5::/48 via 2001:db8:b6::6
+# configure srv6 bsid with end behavior
+$VPPCTL_BINARY_PATH -s /run/vpp/cli.site-b.sock sr localsid address fcbb:aa00:2::2 behavior end
 
 ### Configure site-c
 # loop0
@@ -440,6 +456,8 @@ $VPPCTL_BINARY_PATH -s /run/vpp/cli.site-c.sock ip route add fcbb:cc00:2::/48 vi
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.site-c.sock ip route add fcbb:aa00:2::/48 via 2001:db8:c6::6
 # static routing to beyond-ctrl
 $VPPCTL_BINARY_PATH -s /run/vpp/cli.site-c.sock ip route add fcbb:cc00:5::/48 via 2001:db8:c6::6
+# configure srv6 bsid with end behavior
+$VPPCTL_BINARY_PATH -s /run/vpp/cli.site-c.sock sr localsid address fcbb:aa00:3::2 behavior end
 
 sleep 10
 

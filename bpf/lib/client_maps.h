@@ -1,6 +1,5 @@
 #ifndef __LIB_CLIENT_MAPS_H
 #define __LIB_CLIENT_MAPS_H
-#include "client.h"
 #include "consts.h"
 #include <bpf/bpf_endian.h>
 #include <bpf/bpf_helpers.h>

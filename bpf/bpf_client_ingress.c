@@ -11,9 +11,9 @@
 #include <bpf/bpf_endian.h>
 #include <bpf/bpf_helpers.h>
 
+#include "lib/client_maps.h"
 #include "lib/consts.h"
 #include "lib/dns.h"
-#include "lib/client_maps.h"
 
 #define memcpy __builtin_memcpy
 
