@@ -24,7 +24,7 @@ install-deps: ## Install development dependencies
 
 build: ## Compile the Go binary
 	mkdir -p out/bin
-	$(GOCMD) build -o out/bin/$(BINARY_NAME) ./cmd/$(BINARY_NAME)/main.go
+	$(GOCMD) build -o out/bin/$(BINARY_NAME) ./$(BINARY_NAME)/main.go
 
 clean: ## Clean build artifacts
 	rm -fr out
@@ -57,6 +57,7 @@ start-client: ## Start the client
 
 start-server: ## Start the server
 	@echo "Starting server..."
+	cd tools && sudo ip netns exec ns-host-b ./network.sh -q
 
 start-controller: ## Start the controller
 	@echo "Starting controller..."
