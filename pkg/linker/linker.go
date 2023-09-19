@@ -28,6 +28,7 @@ type TcLinker struct {
 	iface       netlink.Link
 	program     *ebpf.Program
 	programName string
+	direction   uint32
 }
 
 func NewXdpLinker(iface netlink.Link, program *ebpf.Program) *XdpLinker {
@@ -54,10 +55,11 @@ func (l *XdpLinker) Detach() error {
 	return nil
 }
 
-func NewTcLinker(iface netlink.Link, program *ebpf.Program) *TcLinker {
+func NewTcLinker(iface netlink.Link, program *ebpf.Program, direction string) *TcLinker {
 	return &TcLinker{
-		iface:   iface,
-		program: program,
+		iface:     iface,
+		program:   program,
+		direction: directionToParentDisc(direction),
 	}
 }
 
