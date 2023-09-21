@@ -16,6 +16,8 @@
 #include "lib/client_maps.h"
 #include "lib/consts.h"
 #include "lib/srv6.h"
+#include "lib/ipv6.h"
+#include "lib/csum.h"
 
 #define memcpy __builtin_memcpy
 
@@ -34,61 +36,36 @@ int filter_egress(struct __sk_buff *skb)
 	struct ethhdr *eth = data;
 	struct ipv6hdr *ipv6 = (struct ipv6hdr *)(eth + 1);
 
-	// Validate ethernet header
-	if ((void *)(eth + 1) > data_end) {
-#ifdef DEBUG
-		bpf_printk("[tc-egress] invalid ethernet header\n");
-#endif
+	if ((void *)(eth + 1) > data_end)
 		return TC_ACT_OK;
-	}
-
-	// Validate IPv6 header
-	if ((void *)(ipv6 + 1) > data_end) {
-#ifdef DEBUG
-		bpf_printk("[tc-egress] invalid IPv6 header\n");
-#endif
+		
+	if (eth->h_proto != bpf_htons(ETH_P_IPV6))
 		return TC_ACT_OK;
-	}
 
-	// Check if it is an IPv6 packet
-	if (eth->h_proto != bpf_htons(ETH_P_IPV6)) {
-#ifdef DEBUG
-		bpf_printk("[tc-egress] not IPv6 packet\n");
-#endif
+	if ((void *)(ipv6 + 1) > data_end)
 		return TC_ACT_OK;
-	}
 
-	// Check if it is a UDP or TCP packet
-	if (ipv6->nexthdr != IPPROTO_UDP && ipv6->nexthdr != IPPROTO_TCP) {
-#ifdef DEBUG
-		bpf_printk("[tc-egress] not UDP or TCP packet\n");
-#endif
+	if (ipv6->nexthdr != IPPROTO_UDP && ipv6->nexthdr != IPPROTO_TCP)
 		return TC_ACT_OK;
-	}
 
+	__wsum original_pseudo_chk = ipv6_pseudohdr_checksum(ipv6, IPPROTO_TCP, bpf_ntohs(ipv6->payload_len), 0);
+	struct ipv6hdr old_ipv6;
+	memcpy(&old_ipv6, ipv6, sizeof(struct ipv6hdr));
 	/*
 	Check if there is an entry for the dstaddr in the client_reverse_map
 	Value should be an __u32 domain_id
 	*/
 	__u32 *domain_id = bpf_map_lookup_elem(&client_reverse_map, &ipv6->daddr);
-	if (!domain_id) {
-#ifdef DEBUG
-		bpf_printk("[tc-egress] no entry in reverse map\n");
-#endif
+	if (!domain_id)
 		return TC_ACT_OK;
-	}
 
 	/*
 	Check if there is an inner_map for the domain_id in the client_outer_map
 	*/
 	struct bpf_elf_map *inner_map =
 		bpf_map_lookup_elem(&client_outer_map, domain_id);
-	if (!inner_map) {
-#ifdef DEBUG
-		bpf_printk("[tc-egress] no inner map for domain_id\n");
-#endif
+	if (!inner_map)
 		return TC_ACT_OK;
-	}
 
 	__u16 dstport = 0;
 	if (ipv6->nexthdr == IPPROTO_UDP) {
@@ -104,14 +81,8 @@ int filter_egress(struct __sk_buff *skb)
 	}
 
 	struct in6_addr *segment_list = bpf_map_lookup_elem(inner_map, &dstport);
-	if (!segment_list) {
-#ifdef DEBUG
-		bpf_printk("[tc-egress] no segment list for port %d\n", dstport);
-#endif
+	if (!segment_list)
 		return TC_ACT_OK;
-	}
-	bpf_printk("[tc-egress] segment list for port %d: %pI6\n", dstport,
-			   segment_list);
 
 	__u8 num_sids = 3;
 
@@ -142,43 +113,58 @@ int filter_egress(struct __sk_buff *skb)
 	if (bpf_skb_adjust_room(skb,
 							sizeof(struct srv6_hdr) +
 								sizeof(struct in6_addr) * num_sids,
-							BPF_ADJ_ROOM_NET, 0) < 0) {
-#ifdef DEBUG
-		bpf_printk("[tc-egress] error adjusting room\n");
-#endif
+							BPF_ADJ_ROOM_NET, 0) < 0)
 		return TC_ACT_OK;
-	}
 
 	// store the SRH after the IPv6 header
 	if (bpf_skb_store_bytes(
 			skb, sizeof(struct ethhdr) + sizeof(struct ipv6hdr), &srv6,
 			sizeof(struct srv6_hdr),
-			0) < 0) {
-#ifdef DEBUG
-		bpf_printk("[tc-egress] error storing bytes\n");
-#endif
+			0) < 0)
 		return TC_ACT_OK;
-	}
 
 	// store the sids after the SRH
 	if (bpf_skb_store_bytes(
 			skb, sizeof(struct ethhdr) + sizeof(struct ipv6hdr) +
 					 sizeof(struct srv6_hdr),
-			segment_list, sizeof(struct in6_addr) * num_sids, 0) < 0) {
-#ifdef DEBUG
-		bpf_printk("[tc-egress] error storing sid list\n");
-#endif
+			segment_list, sizeof(struct in6_addr) * num_sids, 0) < 0) 
 		return TC_ACT_OK;
-	}
 
-// 	if (encap_seg6(skb, ipv6, segment_list, num_sids) < 0) {
-// #ifdef DEBUG
-// 		bpf_printk("[tc-egress] error encapsulating packet\n");
-// #endif
-// 		return TC_ACT_OK;
-// 	}
+	data_end = (void *)(long)skb->data_end;
+	data = (void *)(long)skb->data;
+	eth = data;
+	ipv6 = (struct ipv6hdr *)(eth + 1);
 
-	bpf_printk("[tc-egress] FINISHED\n");
+	if ((void *)(eth + 1) > data_end || (void *)(ipv6 + 1) > data_end)
+		return TC_ACT_OK;
+
+
+	// tcp header starts after ipv6 + srh plus segment list hdr_ext_len
+	struct tcphdr *tcp = (struct tcphdr *)(ipv6 + 1) + hdr_ext_len;
+	if ((void *)(tcp + 1) > data_end)
+		return TC_ACT_OK;
+
+	__wsum new_pseudo_chk = ipv6_pseudohdr_checksum(ipv6, ipv6->nexthdr, bpf_ntohs(ipv6->payload_len), 0);
+	__wsum csum_diff = bpf_csum_diff(&original_pseudo_chk, sizeof(original_pseudo_chk), &new_pseudo_chk, sizeof(new_pseudo_chk), 0);
+	// tcp->check = ~csum_fold(csum_add(~csum_unfold(tcp->check), csum_diff));
+
+	// if (bpf_l4_csum_replace(skb, sizeof(struct ethhdr) + sizeof(struct ipv6hdr) + (hdr_ext_len + 1) * 8, original_pseudo_chk, new_pseudo_chk, 0) < 0)
+	// 	return TC_ACT_OK;
+
+	__wsum wsum;
+	wsum = ipv6_pseudohdr_checksum(ipv6, IPPROTO_TCP, ipv6->payload_len, 0);
+
+	// tcp->check = csum_fold(bpf_csum_diff(NULL, 0, &ipv6, sizeof(ipv6),
+	// 				bpf_csum_diff(NULL, 0, &old_ipv6,
+	// 					sizeof(old_ipv6),
+	// 						bpf_csum_diff(NULL, 0, tcp,
+	// 							sizeof(tcp), wsum))));
+	
+	// bpf_l4_csum_replace(skb, offsetof(struct tcphdr, check), &old_ipv6.daddr, &ipv6->daddr, sizeof(ipv6->daddr));
+	// bpf_l4_csum_replace(skb, offsetof(struct tcphdr, check), &old_ipv6.nexthdr, &ipv6->nexthdr, sizeof(ipv6->nexthdr));
+
+
+	bpf_printk("[tc-egress] srv6 packet send\n");
 
 	return TC_ACT_OK;
 }

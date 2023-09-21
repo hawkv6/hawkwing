@@ -12,9 +12,10 @@ import (
 )
 
 type Server struct {
-	iface    netlink.Link
-	tcLinker *linker.TcLinker
-	wg       *sync.WaitGroup
+	iface     netlink.Link
+	xdpLinker *linker.XdpLinker
+	tcLinker  *linker.TcLinker
+	wg        *sync.WaitGroup
 }
 
 func NewServer(interfaceName string) (*Server, error) {
@@ -22,6 +23,12 @@ func NewServer(interfaceName string) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not lookup network iface %q: %s", interfaceName, err)
 	}
+	xdpObjs, err := server.ReadServerXdpObjects()
+	if err != nil {
+		return nil, fmt.Errorf("could not load TC program: %s", err)
+	}
+	xdpLinker := linker.NewXdpLinker(iface, xdpObjs.FilterIngress)
+
 	tcObjs, err := server.ReadServerTcObjects()
 	if err != nil {
 		return nil, fmt.Errorf("could not load TC program: %s", err)
@@ -34,9 +41,10 @@ func NewServer(interfaceName string) (*Server, error) {
 	}
 
 	return &Server{
-		iface:    iface,
-		tcLinker: tcLinker,
-		wg:       &sync.WaitGroup{},
+		iface:     iface,
+		xdpLinker: xdpLinker,
+		tcLinker:  tcLinker,
+		wg:        &sync.WaitGroup{},
 	}, nil
 }
 
@@ -44,7 +52,8 @@ func (s *Server) Start() {
 	s.wg.Add(1)
 	go func() {
 		defer s.wg.Done()
-		err := s.tcLinker.Attach()
+		err := s.xdpLinker.Attach()
+		// err := s.tcLinker.Attach()
 		if err != nil {
 			log.Fatalf("Could not attach TC program: %s", err)
 		}
@@ -55,7 +64,8 @@ func (s *Server) Start() {
 }
 
 func (s *Server) Stop() {
-	if err := s.tcLinker.Detach(); err != nil {
+	// if err := s.tcLinker.Detach(); err != nil {
+	if err := s.xdpLinker.Detach(); err != nil {
 		log.Fatalf("Could not detach TC program: %s", err)
 	}
 	s.wg.Wait()

@@ -16,6 +16,7 @@ func main() {
 	port := os.Args[2]
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("Received request from", r.RemoteAddr)
 		switch host {
 		case "host-b":
 			fmt.Fprintln(w, "Welcome from Host-B")
