@@ -10,8 +10,9 @@
 #define IPV6_DADDR_OFF offsetof(struct ipv6hdr, daddr)
 
 static __always_inline __be32 ipv6_pseudohdr_checksum(struct ipv6hdr *hdr,
-						      __u8 next_hdr,
-						      __u16 payload_len, __be32 sum)
+													  __u8 next_hdr,
+													  __u16 payload_len,
+													  __be32 sum)
 {
 	__be32 len = bpf_htonl((__u32)payload_len);
 	__be32 nexthdr = bpf_htonl((__u32)next_hdr);

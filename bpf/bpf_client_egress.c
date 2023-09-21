@@ -12,12 +12,9 @@
 #include <bpf/bpf_endian.h>
 #include <bpf/bpf_helpers.h>
 
-// #include "bpf_encap_seg6.c"
 #include "lib/client_maps.h"
 #include "lib/consts.h"
 #include "lib/srv6.h"
-#include "lib/ipv6.h"
-#include "lib/csum.h"
 
 #define memcpy __builtin_memcpy
 
@@ -38,7 +35,7 @@ int filter_egress(struct __sk_buff *skb)
 
 	if ((void *)(eth + 1) > data_end)
 		return TC_ACT_OK;
-		
+
 	if (eth->h_proto != bpf_htons(ETH_P_IPV6))
 		return TC_ACT_OK;
 
@@ -48,9 +45,6 @@ int filter_egress(struct __sk_buff *skb)
 	if (ipv6->nexthdr != IPPROTO_UDP && ipv6->nexthdr != IPPROTO_TCP)
 		return TC_ACT_OK;
 
-	__wsum original_pseudo_chk = ipv6_pseudohdr_checksum(ipv6, IPPROTO_TCP, bpf_ntohs(ipv6->payload_len), 0);
-	struct ipv6hdr old_ipv6;
-	memcpy(&old_ipv6, ipv6, sizeof(struct ipv6hdr));
 	/*
 	Check if there is an entry for the dstaddr in the client_reverse_map
 	Value should be an __u32 domain_id
@@ -91,7 +85,8 @@ int filter_egress(struct __sk_buff *skb)
 	// fill up the SRH
 	srv6.next_hdr = 6;
 	// int hdr_ext_len = ((16 * num_sids) + 8 - 1) / 8;
-	int hdr_ext_len = (sizeof(struct srv6_hdr) + sizeof(struct in6_addr) * num_sids - 8)/8;
+	int hdr_ext_len =
+		(sizeof(struct srv6_hdr) + sizeof(struct in6_addr) * num_sids - 8) / 8;
 	srv6.hdr_ext_len = hdr_ext_len;
 	srv6.routing_type = SRV6_ROUTING_TYPE;
 	srv6.segments_left = num_sids - 1;
@@ -110,59 +105,23 @@ int filter_egress(struct __sk_buff *skb)
 	memcpy(&ipv6->daddr, &segment_list[num_sids - 1], sizeof(struct in6_addr));
 
 	// adjust room for the SRH
-	if (bpf_skb_adjust_room(skb,
-							sizeof(struct srv6_hdr) +
-								sizeof(struct in6_addr) * num_sids,
-							BPF_ADJ_ROOM_NET, 0) < 0)
+	if (bpf_skb_adjust_room(
+			skb, sizeof(struct srv6_hdr) + sizeof(struct in6_addr) * num_sids,
+			BPF_ADJ_ROOM_NET, 0) < 0)
 		return TC_ACT_OK;
 
 	// store the SRH after the IPv6 header
-	if (bpf_skb_store_bytes(
-			skb, sizeof(struct ethhdr) + sizeof(struct ipv6hdr), &srv6,
-			sizeof(struct srv6_hdr),
-			0) < 0)
+	if (bpf_skb_store_bytes(skb, sizeof(struct ethhdr) + sizeof(struct ipv6hdr),
+							&srv6, sizeof(struct srv6_hdr), 0) < 0)
 		return TC_ACT_OK;
 
 	// store the sids after the SRH
-	if (bpf_skb_store_bytes(
-			skb, sizeof(struct ethhdr) + sizeof(struct ipv6hdr) +
-					 sizeof(struct srv6_hdr),
-			segment_list, sizeof(struct in6_addr) * num_sids, 0) < 0) 
+	if (bpf_skb_store_bytes(skb,
+							sizeof(struct ethhdr) + sizeof(struct ipv6hdr) +
+								sizeof(struct srv6_hdr),
+							segment_list, sizeof(struct in6_addr) * num_sids,
+							0) < 0)
 		return TC_ACT_OK;
-
-	data_end = (void *)(long)skb->data_end;
-	data = (void *)(long)skb->data;
-	eth = data;
-	ipv6 = (struct ipv6hdr *)(eth + 1);
-
-	if ((void *)(eth + 1) > data_end || (void *)(ipv6 + 1) > data_end)
-		return TC_ACT_OK;
-
-
-	// tcp header starts after ipv6 + srh plus segment list hdr_ext_len
-	struct tcphdr *tcp = (struct tcphdr *)(ipv6 + 1) + hdr_ext_len;
-	if ((void *)(tcp + 1) > data_end)
-		return TC_ACT_OK;
-
-	__wsum new_pseudo_chk = ipv6_pseudohdr_checksum(ipv6, ipv6->nexthdr, bpf_ntohs(ipv6->payload_len), 0);
-	__wsum csum_diff = bpf_csum_diff(&original_pseudo_chk, sizeof(original_pseudo_chk), &new_pseudo_chk, sizeof(new_pseudo_chk), 0);
-	// tcp->check = ~csum_fold(csum_add(~csum_unfold(tcp->check), csum_diff));
-
-	// if (bpf_l4_csum_replace(skb, sizeof(struct ethhdr) + sizeof(struct ipv6hdr) + (hdr_ext_len + 1) * 8, original_pseudo_chk, new_pseudo_chk, 0) < 0)
-	// 	return TC_ACT_OK;
-
-	__wsum wsum;
-	wsum = ipv6_pseudohdr_checksum(ipv6, IPPROTO_TCP, ipv6->payload_len, 0);
-
-	// tcp->check = csum_fold(bpf_csum_diff(NULL, 0, &ipv6, sizeof(ipv6),
-	// 				bpf_csum_diff(NULL, 0, &old_ipv6,
-	// 					sizeof(old_ipv6),
-	// 						bpf_csum_diff(NULL, 0, tcp,
-	// 							sizeof(tcp), wsum))));
-	
-	// bpf_l4_csum_replace(skb, offsetof(struct tcphdr, check), &old_ipv6.daddr, &ipv6->daddr, sizeof(ipv6->daddr));
-	// bpf_l4_csum_replace(skb, offsetof(struct tcphdr, check), &old_ipv6.nexthdr, &ipv6->nexthdr, sizeof(ipv6->nexthdr));
-
 
 	bpf_printk("[tc-egress] srv6 packet send\n");
 

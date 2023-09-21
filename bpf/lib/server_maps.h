@@ -8,5 +8,4 @@
 #include <linux/if_ether.h>
 #include <linux/types.h>
 
-
 #endif
