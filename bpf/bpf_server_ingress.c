@@ -13,6 +13,7 @@
 
 #include "lib/consts.h"
 #include "lib/srv6.h"
+#include "lib/server_maps.h"
 
 #define memcpy __builtin_memcpy
 
@@ -43,6 +44,20 @@ int filter_ingress(struct xdp_md *ctx)
 
 	if (srv6_remove_srh(ctx, data, data_end, srh) < 0)
 		return XDP_DROP;
+
+	// struct tcphdr *tcp = (struct tcphdr *)(srh + 1) + sidlist_size;
+	// if ((void *)(tcp + 1) > data_end)
+	// 	return XDP_PASS;
+
+	// struct server_lookup_key lookup_key;
+	// memset(&lookup_key, 0, sizeof(struct server_lookup_key));
+	// lookup_key.addr = ipv6->saddr;
+	// lookup_key.port = tcp->source;
+
+	// struct in6_addr test_sidlist[10];
+	// memset(test_sidlist, 0, sizeof(struct in6_addr) * 10);
+
+	// bpf_map_update_elem(&server_lookup_map, &lookup_key, test_sidlist, BPF_ANY);
 
 	bpf_printk("[xdp | server] packet processed\n");
 

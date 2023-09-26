@@ -110,4 +110,16 @@ static __always_inline int srv6_remove_srh(struct xdp_md *ctx, void *data,
 	return 0;
 }
 
+static __always_inline int srv6_reverse_sid_list(struct in6_addr *sidlist, int sidlist_size)
+{
+    int i;
+    for (i = 0; i < sidlist_size / 2; i++)
+    {
+        struct in6_addr tmp = sidlist[i];
+        sidlist[i] = sidlist[sidlist_size - i - 1];
+        sidlist[sidlist_size - i - 1] = tmp;
+    }
+    return 0;
+}
+
 #endif

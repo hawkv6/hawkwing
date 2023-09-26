@@ -8,6 +8,7 @@ import (
 	"github.com/hawkv6/hawkwing/pkg/bpf/client"
 	"github.com/hawkv6/hawkwing/pkg/linker"
 	"github.com/hawkv6/hawkwing/pkg/logging"
+	"github.com/hawkv6/hawkwing/pkg/maps"
 	"github.com/vishvananda/netlink"
 )
 
@@ -46,7 +47,7 @@ func NewClient(interfaceName string) (*Client, error) {
 		log.Fatalf("Could not mount BPF filesystem: %s", err)
 	}
 
-	clientMap := bpf.NewClientMap()
+	clientMap := maps.NewClientMap()
 	err = clientMap.CreateClientDataMaps()
 	if err != nil {
 		log.Fatalf("Could not create client data maps: %s", err)

@@ -12,6 +12,11 @@ import (
 	"github.com/cilium/ebpf"
 )
 
+type xdpServerLookupKey struct {
+	Addr struct{ In6U struct{ U6Addr8 [16]uint8 } }
+	Port uint16
+}
+
 // loadXdp returns the embedded CollectionSpec for xdp.
 func loadXdp() (*ebpf.CollectionSpec, error) {
 	reader := bytes.NewReader(_XdpBytes)
@@ -60,6 +65,7 @@ type xdpProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type xdpMapSpecs struct {
+	ServerLookupMap *ebpf.MapSpec `ebpf:"server_lookup_map"`
 }
 
 // xdpObjects contains all objects after they have been loaded into the kernel.
@@ -81,10 +87,13 @@ func (o *xdpObjects) Close() error {
 //
 // It can be passed to loadXdpObjects or ebpf.CollectionSpec.LoadAndAssign.
 type xdpMaps struct {
+	ServerLookupMap *ebpf.Map `ebpf:"server_lookup_map"`
 }
 
 func (m *xdpMaps) Close() error {
-	return _XdpClose()
+	return _XdpClose(
+		m.ServerLookupMap,
+	)
 }
 
 // xdpPrograms contains all programs after they have been loaded into the kernel.
