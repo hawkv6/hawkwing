@@ -1,13 +1,39 @@
-package bpf
+package maps
 
 import (
 	"fmt"
 	"net"
 	"strings"
+
+	"github.com/cilium/ebpf"
+	"github.com/hawkv6/hawkwing/pkg/bpf"
 )
 
-// FormatDNSName takes a domain name and converts it into a dns name.
-// This function is used to convert the domain name into a format that can be used as a key in the BPF map.
+var (
+	pinnedMapOptions = ebpf.MapOptions{
+		PinPath: bpf.BpffsRoot,
+	}
+)
+
+// InnerMapData is a struct containing the data stored in the inner map of the
+// client/server map. The inner map is a LRU hash map with a key size of 2 bytes
+// and a value size of 160 bytes. The key is the destination port of the packet
+// and the value is a struct containing the IPv6 Segment IDs (SIDs).
+type InnerMapData struct {
+	DstPort  uint16
+	Segments [10]struct{ In6U struct{ U6Addr8 [16]uint8 } }
+}
+
+// FormatDNSName takes a domain name in string format and returns a byte array
+// containing the domain name in DNS format. The returned byte array is intended
+// for use as a key in an eBPF map.
+//
+// Parameters:
+//   - domain: A domain name in string format.
+//
+// Returns:
+//   - A byte array containing the domain name in DNS format.
+//   - An error if the domain name is invalid.
 func FormatDNSName(domain string) ([256]byte, error) {
 	var result [256]byte
 	labels := strings.Split(domain, ".")
@@ -35,20 +61,6 @@ func FormatDNSName(domain string) ([256]byte, error) {
 
 	return result, nil
 }
-
-// SidToInet6Sid takes a list of IPv6 addresses and converts them into a list of inet6 addresses
-// This function is used to convert the list of IPv6 addresses into a format that can be used as a value in the BPF map.
-// func SidToInet6Sid(sidList []string) [10]struct{ in6U struct{ u6Addr8 [16]uint8 } } {
-// 	var result [10]struct{ in6U struct{ u6Addr8 [16]uint8 } }
-// 	for i, sid := range sidList {
-// 		ipv6 := net.ParseIP(sid)
-// 		// var inner struct{ in6U struct{ u6Addr8 [16]uint8 } }
-// 		// copy(inner.in6U.u6Addr8[:], ipv6.To16())
-// 		// result = append(result, inner)
-// 		copy(result[i].in6U.u6Addr8[:], ipv6.To16())
-// 	}
-// 	return result
-// }
 
 // SidToInet6Sid takes a slice of IPv6 Segment IDs (SIDs) in string format and returns an array
 // of 10 structs containing the IPv6 SIDs in reversed order. The returned array is intended

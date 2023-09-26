@@ -1,4 +1,4 @@
-package bpf
+package maps
 
 import (
 	"fmt"
@@ -7,11 +7,6 @@ import (
 	"github.com/hawkv6/hawkwing/internal/config"
 )
 
-type InnerMapData struct {
-	DstPort  uint16
-	Segments [10]struct{ In6U struct{ U6Addr8 [16]uint8 } }
-}
-
 type ClientMap struct {
 	outerMapSpec *ebpf.MapSpec
 }
@@ -19,43 +14,10 @@ type ClientMap struct {
 func (cm *ClientMap) CreateClientDataMaps() error {
 	lookupMapSpec := cm.clientLookupMapSpec()
 	innerMapSpecs := cm.clientInnerMapSpecs()
-	i := 0
-	for key, innerMapSpec := range innerMapSpecs {
-		innerMap, err := ebpf.NewMap(innerMapSpec)
-		if err != nil {
-			return fmt.Errorf("could not create inner map: %s", err)
-		}
 
-		formatedDnsName, err := FormatDNSName(key)
-		if err != nil {
-			return fmt.Errorf("could not format DNS name: %s", err)
-		}
-
-		cm.outerMapSpec.Contents[i] = ebpf.MapKV{
-			Key:   uint32(i),
-			Value: innerMap,
-		}
-
-		lookupMapSpec.Contents[i] = ebpf.MapKV{
-			Key:   formatedDnsName,
-			Value: uint32(i),
-		}
-
-		i++
-	}
-
-	_, err := ebpf.NewMapWithOptions(lookupMapSpec, ebpf.MapOptions{
-		PinPath: BpffsRoot,
-	})
+	err := BuildClientDataMap(lookupMapSpec, cm.outerMapSpec, innerMapSpecs)
 	if err != nil {
-		return fmt.Errorf("could not create lookup map: %s", err)
-	}
-
-	_, err = ebpf.NewMapWithOptions(cm.outerMapSpec, ebpf.MapOptions{
-		PinPath: BpffsRoot,
-	})
-	if err != nil {
-		return fmt.Errorf("could not create outer map: %s", err)
+		return fmt.Errorf("could not build client data maps: %s", err)
 	}
 
 	return nil
@@ -65,8 +27,8 @@ func NewClientMap() *ClientMap {
 	outerMapSpec := &ebpf.MapSpec{
 		Name:       "client_outer_map",
 		Type:       ebpf.HashOfMaps,
-		KeySize:    4,
-		ValueSize:  4,
+		KeySize:    4, // 2 bytes for domain id
+		ValueSize:  4, // 2 bytes for inner map fd
 		MaxEntries: 1024,
 		Pinning:    ebpf.PinByName,
 		Contents:   make([]ebpf.MapKV, len(config.Params.Services)),
