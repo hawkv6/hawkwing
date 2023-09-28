@@ -12,8 +12,8 @@
 #include <bpf/bpf_helpers.h>
 
 #include "lib/consts.h"
-#include "lib/map_helpers.h"
 #include "lib/srv6.h"
+#include "lib/map_helpers.h"
 
 char _license[] SEC("license") = "GPL";
 

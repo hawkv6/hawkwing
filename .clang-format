@@ -26,4 +26,4 @@ AllowShortFunctionsOnASingleLine: Inline
 IncludeBlocks: Preserve
 
 # Sort includes
-SortIncludes: true
+SortIncludes: false

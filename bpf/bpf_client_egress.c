@@ -82,9 +82,8 @@ int client_egress(struct __sk_buff *skb)
 
 	if (add_srh(skb, data, data_end, segment_list, num_sids) < 0)
 		goto drop;
-	// return TC_ACT_OK;
 
-	bpf_printk("[tc-egress] srv6 packet send\n");
+	bpf_printk("[client-egress] srv6 packet send\n");
 
 	return TC_ACT_OK;
 
