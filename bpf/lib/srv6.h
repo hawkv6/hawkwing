@@ -5,6 +5,7 @@
 #include <linux/ip.h>
 #include <linux/tcp.h>
 #include <linux/udp.h>
+
 #include "consts.h"
 
 #define SRV6_NEXT_HDR 43	/* Routing header. */
@@ -42,6 +43,17 @@
  //                                                             //
  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 */
+struct srh {
+	__u8 next_hdr;
+	__u8 hdr_ext_len;
+	__u8 routing_type;
+	__u8 segments_left;
+	__u8 last_entry;
+	__u8 flags;
+	__u16 tag;
+	struct in6_addr segments[0];
+} __attribute__((packed));
+
 struct srv6_hdr {
 	__u8 next_hdr;
 	__u8 hdr_ext_len;
@@ -54,34 +66,34 @@ struct srv6_hdr {
 	// length has to be get from the client_inner_map values
 } __attribute__((packed));
 
-static __always_inline int srv6_get_hdr_len(struct srv6_hdr *hdr)
+static __always_inline int srh_get_hdr_len(struct srh *hdr)
 {
 	return (hdr->hdr_ext_len + 1) * 8;
 }
 
-static __always_inline int srv6_get_segment_list_len(struct srv6_hdr *hdr)
+static __always_inline int srh_get_segment_list_len(struct srh *hdr)
 {
-	return (srv6_get_hdr_len(hdr) - sizeof(struct srv6_hdr)) / 16;
+	return hdr->last_entry + 1;
 }
 
-static __always_inline int srv6_check_boundaries(struct srv6_hdr *hdr,
+static __always_inline int srh_check_boundaries(struct srh *hdr,
 												 void *end)
 {
-	if ((void *)hdr + sizeof(struct srv6_hdr) > end ||
-		(void *)hdr + srv6_get_hdr_len(hdr) > end)
+	if ((void *)hdr + sizeof(struct srh) > end ||
+		(void *)hdr + srh_get_hdr_len(hdr) > end)
 		return -1;
 	return 0;
 }
 
-static __always_inline int srv6_remove_srh(struct xdp_md *ctx, void *data,
-										   void *data_end, struct srv6_hdr *hdr)
+static __always_inline int remove_srh(struct xdp_md *ctx, void *data,
+										   void *data_end, struct srh *hdr)
 {
 	struct ethhdr eth_copy;
 	struct ipv6hdr ipv6_copy;
 	memcpy(&eth_copy, data, sizeof(struct ethhdr));
 	memcpy(&ipv6_copy, data + sizeof(struct ethhdr), sizeof(struct ipv6hdr));
 
-	int srh_len = srv6_get_hdr_len(hdr);
+	int srh_len = srh_get_hdr_len(hdr);
 	__u8 srh_next_hdr = hdr->next_hdr;
 
 	if (bpf_xdp_adjust_head(ctx, srh_len) < 0)
@@ -108,18 +120,6 @@ static __always_inline int srv6_remove_srh(struct xdp_md *ctx, void *data,
 		ipv6->nexthdr = IPPROTO_NONE;
 
 	return 0;
-}
-
-static __always_inline int srv6_reverse_sid_list(struct in6_addr *sidlist, int sidlist_size)
-{
-    int i;
-    for (i = 0; i < sidlist_size / 2; i++)
-    {
-        struct in6_addr tmp = sidlist[i];
-        sidlist[i] = sidlist[sidlist_size - i - 1];
-        sidlist[sidlist_size - i - 1] = tmp;
-    }
-    return 0;
 }
 
 #endif

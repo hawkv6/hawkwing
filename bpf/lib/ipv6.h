@@ -25,4 +25,23 @@ static __always_inline __be32 ipv6_pseudohdr_checksum(struct ipv6hdr *hdr,
 	return sum;
 }
 
+static __always_inline bool is_empty_in6_addr(const struct in6_addr *addr) {
+    for (int i = 0; i < 16; i++) {
+        if (addr->s6_addr[i] != 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+static __always_inline int len_in6_addr_arr(struct in6_addr array[], int array_size) {
+    int count = 0;
+    for (int i = 0; i < array_size; i++) {
+        if (!is_empty_in6_addr(&array[i])) {
+            count++;
+        }
+    }
+    return count;
+}
+
 #endif

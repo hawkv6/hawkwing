@@ -17,6 +17,11 @@ type xdpServerLookupKey struct {
 	Port uint16
 }
 
+type xdpServerLookupValue struct {
+	Sidlist     [10]struct{ In6U struct{ U6Addr8 [16]uint8 } }
+	SidlistSize int32
+}
+
 // loadXdp returns the embedded CollectionSpec for xdp.
 func loadXdp() (*ebpf.CollectionSpec, error) {
 	reader := bytes.NewReader(_XdpBytes)
@@ -65,7 +70,8 @@ type xdpProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type xdpMapSpecs struct {
-	ServerLookupMap *ebpf.MapSpec `ebpf:"server_lookup_map"`
+	ServerLookupMap    *ebpf.MapSpec `ebpf:"server_lookup_map"`
+	ServerTempValueMap *ebpf.MapSpec `ebpf:"server_temp_value_map"`
 }
 
 // xdpObjects contains all objects after they have been loaded into the kernel.
@@ -87,12 +93,14 @@ func (o *xdpObjects) Close() error {
 //
 // It can be passed to loadXdpObjects or ebpf.CollectionSpec.LoadAndAssign.
 type xdpMaps struct {
-	ServerLookupMap *ebpf.Map `ebpf:"server_lookup_map"`
+	ServerLookupMap    *ebpf.Map `ebpf:"server_lookup_map"`
+	ServerTempValueMap *ebpf.Map `ebpf:"server_temp_value_map"`
 }
 
 func (m *xdpMaps) Close() error {
 	return _XdpClose(
 		m.ServerLookupMap,
+		m.ServerTempValueMap,
 	)
 }
 

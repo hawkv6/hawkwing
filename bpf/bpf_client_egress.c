@@ -17,6 +17,7 @@
 #include "lib/srv6.h"
 
 #define memcpy __builtin_memcpy
+#define memset __builtin_memset
 
 char _license[] SEC("license") = "GPL";
 
@@ -78,6 +79,7 @@ int filter_egress(struct __sk_buff *skb)
 	if (!segment_list)
 		return TC_ACT_OK;
 
+	// TODO make it somehow dynamic
 	__u8 num_sids = 3;
 
 	struct srv6_hdr srv6;

@@ -12,6 +12,7 @@
 #include <bpf/bpf_helpers.h>
 
 #include "lib/client_maps.h"
+#include "lib/map_common.h"
 #include "lib/consts.h"
 #include "lib/dns.h"
 

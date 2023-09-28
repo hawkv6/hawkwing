@@ -21,7 +21,7 @@ func NewServerMap() *ServerMap {
 		Name:       "server_lookup_map",
 		Type:       ebpf.LRUHash,
 		KeySize:    18,  // 16 bytes for IPv6 address + 2 bytes for port
-		ValueSize:  160, // 10 * 16 bytes for IPv6 address
+		ValueSize:  164, // 10 * 16 bytes for IPv6 address + 4 for sidlist_size
 		MaxEntries: 1024,
 		Pinning:    ebpf.PinByName,
 		Contents:   make([]ebpf.MapKV, 1),
