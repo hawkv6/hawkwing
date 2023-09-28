@@ -55,7 +55,7 @@ type xdpSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type xdpProgramSpecs struct {
-	InterceptDns *ebpf.ProgramSpec `ebpf:"intercept_dns"`
+	ClientIngress *ebpf.ProgramSpec `ebpf:"client_ingress"`
 }
 
 // xdpMapSpecs contains maps before they are loaded into the kernel.
@@ -106,12 +106,12 @@ func (m *xdpMaps) Close() error {
 //
 // It can be passed to loadXdpObjects or ebpf.CollectionSpec.LoadAndAssign.
 type xdpPrograms struct {
-	InterceptDns *ebpf.Program `ebpf:"intercept_dns"`
+	ClientIngress *ebpf.Program `ebpf:"client_ingress"`
 }
 
 func (p *xdpPrograms) Close() error {
 	return _XdpClose(
-		p.InterceptDns,
+		p.ClientIngress,
 	)
 }
 

@@ -87,9 +87,6 @@ static int parse_dns_query(struct xdp_md *ctx, void *query_start,
 		// Boundary check of cursor. Verifier requires a +1 here.
 		// Probably because we are advancing the pointer at the end of the loop
 		if (cursor + 1 > data_end) {
-#ifdef DEBUG
-			bpf_printk("Error: boundary exceeded while parsing DNS query name");
-#endif
 			break;
 		}
 
@@ -122,28 +119,30 @@ static int parse_dns_query(struct xdp_md *ctx, void *query_start,
 	return -1;
 }
 
-static int is_dns_reply(struct xdp_md *ctx, struct dns_hdr *dns_hdr)
-{
-	void *data_end = (void *)(long)ctx->data_end;
+static __always_inline int parsing_dns_answer(struct xdp_md *ctx, struct dns_hdr *dns, struct dns_query *query, struct dns_answer *answer, void *data_end) {
+	if ((void *)(dns + 1) > data_end) return -1;
+	if (dns->ans_count == 0) return -1;
 
-	if (ctx->data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr) +
-			sizeof(struct udphdr) >
-		data_end)
-		return 0;
-	
-	struct udphdr *udp = ctx->data + sizeof(struct ethhdr) +
-						 sizeof(struct ipv6hdr);
-	
-	if (udp->source != bpf_htons(UDP_P_DNS))
-		return -1;
+	void *query_start = (void *)(dns + 1);
 
-	dns_hdr = ctx->data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr) +
-			   sizeof(struct udphdr);
+	int query_length = parse_dns_query(ctx, query_start, query);
+	if (query_length < 1) return -1;
 
-	if ((void *)(dns_hdr) + sizeof(struct dns_hdr) > data_end)
-		return -1;
+	int dns_answer_result = parse_dns_answer(ctx, dns, query_length, answer);
+	if (dns_answer_result < 0) return -1;
 
 	return 0;
+}
+
+static __always_inline int store_dns_tuple(struct dns_query *query, struct dns_answer *answer)
+{
+	__u32 *domain_id;
+	domain_id = bpf_map_lookup_elem(&client_lookup_map, query->name);
+	if (!domain_id) return -1;
+
+	if (bpf_map_update_elem(&client_reverse_map, &answer->ipv6_address, domain_id, BPF_ANY) < 0) return -1;
+
+	return 0;	
 }
 
 #endif

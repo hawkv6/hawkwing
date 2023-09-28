@@ -34,7 +34,7 @@ func NewClient(interfaceName string) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not load XDP program: %s", err)
 	}
-	xdpLinker := linker.NewXdpLinker(iface, xdpObjs.InterceptDns)
+	xdpLinker := linker.NewXdpLinker(iface, xdpObjs.ClientIngress)
 	tcObjs, err := client.ReadClientTcObjects()
 	if err != nil {
 		return nil, fmt.Errorf("could not load TC program: %s", err)
