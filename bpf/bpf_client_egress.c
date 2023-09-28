@@ -27,21 +27,16 @@ static int parse_udp_hdr(struct __sk_buff *skb, struct udphdr *udp,
 						 __u16 *dstport);
 
 SEC("tc-egress")
-int filter_egress(struct __sk_buff *skb)
+int client_egress(struct __sk_buff *skb)
 {
 	void *data_end = (void *)(long)skb->data_end;
 	void *data = (void *)(long)skb->data;
 	struct ethhdr *eth = data;
 	struct ipv6hdr *ipv6 = (struct ipv6hdr *)(eth + 1);
 
-	if ((void *)(eth + 1) > data_end)
-		return TC_ACT_OK;
-
-	if (eth->h_proto != bpf_htons(ETH_P_IPV6))
-		return TC_ACT_OK;
-
-	if ((void *)(ipv6 + 1) > data_end)
-		return TC_ACT_OK;
+	if ((void *)(eth + 1) > data_end) goto pass;
+	if (eth->h_proto != bpf_htons(ETH_P_IPV6)) goto pass;
+	if ((void *)(ipv6 + 1) > data_end) goto pass;
 
 	if (ipv6->nexthdr != IPPROTO_UDP && ipv6->nexthdr != IPPROTO_TCP)
 		return TC_ACT_OK;
@@ -82,52 +77,20 @@ int filter_egress(struct __sk_buff *skb)
 	// TODO make it somehow dynamic
 	__u8 num_sids = 3;
 
-	struct srv6_hdr srv6;
-	__builtin_memset(&srv6, 0, sizeof(struct srv6_hdr));
-	// fill up the SRH
-	srv6.next_hdr = 6;
-	// int hdr_ext_len = ((16 * num_sids) + 8 - 1) / 8;
-	int hdr_ext_len =
-		(sizeof(struct srv6_hdr) + sizeof(struct in6_addr) * num_sids - 8) / 8;
-	srv6.hdr_ext_len = hdr_ext_len;
-	srv6.routing_type = SRV6_ROUTING_TYPE;
-	srv6.segments_left = num_sids - 1;
-	srv6.last_entry = num_sids - 1;
-
-	// copy ipv6 dstaddr to sids[0]
-	memcpy(&segment_list[0], &ipv6->daddr, sizeof(struct in6_addr));
-
-	__u16 old_payload_len = bpf_ntohs(ipv6->payload_len);
-	__u16 new_payload_len = old_payload_len + sizeof(struct srv6_hdr) +
-							sizeof(struct in6_addr) * num_sids;
-	ipv6->payload_len = bpf_htons(new_payload_len);
-	// ipv6 next header is set to SRH
-	ipv6->nexthdr = SRV6_NEXT_HDR;
-	// ipv6 destination address is set to the last entry in sid list
-	memcpy(&ipv6->daddr, &segment_list[num_sids - 1], sizeof(struct in6_addr));
-
-	// adjust room for the SRH
-	if (bpf_skb_adjust_room(
-			skb, sizeof(struct srv6_hdr) + sizeof(struct in6_addr) * num_sids,
-			BPF_ADJ_ROOM_NET, 0) < 0)
-		return TC_ACT_OK;
-
-	// store the SRH after the IPv6 header
-	if (bpf_skb_store_bytes(skb, sizeof(struct ethhdr) + sizeof(struct ipv6hdr),
-							&srv6, sizeof(struct srv6_hdr), 0) < 0)
-		return TC_ACT_OK;
-
-	// store the sids after the SRH
-	if (bpf_skb_store_bytes(skb,
-							sizeof(struct ethhdr) + sizeof(struct ipv6hdr) +
-								sizeof(struct srv6_hdr),
-							segment_list, sizeof(struct in6_addr) * num_sids,
-							0) < 0)
-		return TC_ACT_OK;
+	if (add_srh(skb, data, data_end, segment_list, num_sids) < 0) goto drop;
+		// return TC_ACT_OK;
 
 	bpf_printk("[tc-egress] srv6 packet send\n");
 
 	return TC_ACT_OK;
+
+pass:
+	bpf_printk("[client-egress] pass\n");
+	return TC_ACT_OK;
+
+drop:
+	bpf_printk("[client-egress] drop\n");
+	return TC_ACT_SHOT;
 }
 
 static int parse_tcp_hdr(struct __sk_buff *skb, struct tcphdr *tcp,

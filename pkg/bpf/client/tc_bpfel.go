@@ -55,7 +55,7 @@ type tcSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type tcProgramSpecs struct {
-	FilterEgress *ebpf.ProgramSpec `ebpf:"filter_egress"`
+	ClientEgress *ebpf.ProgramSpec `ebpf:"client_egress"`
 }
 
 // tcMapSpecs contains maps before they are loaded into the kernel.
@@ -106,12 +106,12 @@ func (m *tcMaps) Close() error {
 //
 // It can be passed to loadTcObjects or ebpf.CollectionSpec.LoadAndAssign.
 type tcPrograms struct {
-	FilterEgress *ebpf.Program `ebpf:"filter_egress"`
+	ClientEgress *ebpf.Program `ebpf:"client_egress"`
 }
 
 func (p *tcPrograms) Close() error {
 	return _TcClose(
-		p.FilterEgress,
+		p.ClientEgress,
 	)
 }
 
