@@ -68,7 +68,7 @@ handle_dns:
 handle_srh:
 	srh = (struct srh *)(ipv6 + 1);
 	if (srh_check_boundaries(srh, data_end) < 0) goto drop;
-	// if (remove_srh(ctx, data, data_end, srh) < 0) goto drop;
+	if (remove_srh(ctx, data, data_end, srh) < 0) goto drop;
 
 	bpf_printk("[client-ingress] handle_srh\n");
 	return XDP_PASS;
