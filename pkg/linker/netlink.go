@@ -10,6 +10,16 @@ import (
 	"github.com/vishvananda/netlink"
 )
 
+func directionToParentDisc(direction string) uint32 {
+	switch direction {
+	case "ingress":
+		return netlink.HANDLE_MIN_INGRESS
+	case "egress":
+		return netlink.HANDLE_MIN_EGRESS
+	}
+	return 0
+}
+
 func (l *XdpLinker) detachXdp() error {
 	return l.link.Close()
 }
@@ -45,7 +55,7 @@ func (l *TcLinker) replaceQdisc() error {
 }
 
 func (l *TcLinker) removeTCFilters() error {
-	filters, err := netlink.FilterList(l.iface, netlink.HANDLE_MIN_EGRESS)
+	filters, err := netlink.FilterList(l.iface, l.direction)
 	if err != nil {
 		return err
 	}
@@ -71,7 +81,7 @@ func (l *TcLinker) attachTCProgram() error {
 	filter := &netlink.BpfFilter{
 		FilterAttrs: netlink.FilterAttrs{
 			LinkIndex: l.iface.Attrs().Index,
-			Parent:    netlink.HANDLE_MIN_EGRESS,
+			Parent:    l.direction,
 			Handle:    1,
 			Protocol:  unix.ETH_P_ALL,
 			Priority:  1,

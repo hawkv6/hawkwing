@@ -25,7 +25,8 @@ usage() {
     echo "  -c                  Clean the network"
     echo "  -i [process]        Interact with VPP"
     echo "  -n [namespace]      Open a shell in the specified namespace"
-    echo "  -p                  Start the application"
+    echo "  -p                  Start the client application"
+    echo "  -q                  Start the server application"
     exit 1
 }
 
@@ -71,14 +72,20 @@ start_webservers() {
     echo -e "${GREEN}Webservers started successfully${NC}"
 }
 
-start_application() {
+start_client_application() {
     echo -e "${GREEN}Starting application...${NC}"
     mount -t bpf bpf /sys/fs/bpf
-    cd .. && ./out/bin/hawkwing --config ./test_assets/config.yaml
+    cd .. && ./out/bin/hawkwing client --config ./test_assets/config.yaml
+}
+
+start_server_application() {
+    echo -e "${GREEN}Starting application...${NC}"
+    mount -t bpf bpf /sys/fs/bpf
+    cd .. && ./out/bin/hawkwing server --config ./test_assets/config.yaml
 }
 
 # Parse arguments
-while getopts ":hsci:n:p" opt; do
+while getopts ":hsci:n:pq" opt; do
     case $opt in
         s)
             start_network
@@ -93,7 +100,10 @@ while getopts ":hsci:n:p" opt; do
             open_namespace_shell $OPTARG
             ;;
         p)
-            start_application
+            start_client_application
+            ;;
+        q)
+            start_server_application
             ;;
         h)
             usage

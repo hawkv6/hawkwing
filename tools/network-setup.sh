@@ -55,6 +55,8 @@ sleep 5
 ip netns add ns-host-a
 ip link set host-a netns ns-host-a
 ip netns exec ns-host-a ip link set host-a up
+# Disable tx an rx csum offloading, as veth does not support it. Otherwise, packets will have invalid csums.
+ip netns exec ns-host-a ethtool -K host-a rx off tx off
 ip netns exec ns-host-a ip -6 address add 2001:cafe:a::a/64 dev host-a
 ip netns exec ns-host-a ip -6 address add fcbb:cc00:1::a/48 dev host-a
 ip netns exec ns-host-a ip -6 route add fcbb:bb00::/32 via 2001:cafe:a::1 dev host-a metric 1 # route to reach internal vpp network
@@ -68,6 +70,7 @@ ip netns exec ns-host-a ip -6 route add fcbb:cc00:5::/48 via 2001:cafe:a::1 dev 
 ip netns add ns-host-b
 ip link set host-b netns ns-host-b
 ip netns exec ns-host-b ip link set host-b up
+ip netns exec ns-host-b ethtool -K host-b rx off tx off
 ip netns exec ns-host-b ip -6 address add 2001:cafe:b::b/64 dev host-b
 ip netns exec ns-host-b ip -6 address add fcbb:cc00:2::a/48 dev host-b
 ip netns exec ns-host-b ip -6 route add fcbb:bb00::/32 via 2001:cafe:b::1 dev host-b metric 1 # route to reach internal vpp network
@@ -80,6 +83,7 @@ ip netns exec ns-host-b ip -6 route add fcbb:cc00:5::/48 via 2001:cafe:b::1 dev 
 ip netns add ns-host-c
 ip link set host-c netns ns-host-c
 ip netns exec ns-host-c ip link set host-c up
+ip netns exec ns-host-c ethtool -K host-c rx off tx off
 ip netns exec ns-host-c ip -6 address add 2001:cafe:c::c/64 dev host-c
 ip netns exec ns-host-c ip -6 address add fcbb:cc00:3::a/48 dev host-c
 ip netns exec ns-host-c ip -6 route add fcbb:bb00::/32 via 2001:cafe:c::1 dev host-c metric 1 # route to reach internal vpp network
