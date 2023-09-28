@@ -18,7 +18,7 @@
 char _license[] SEC("license") = "GPL";
 
 SEC("xdp")
-int filter_ingress(struct xdp_md *ctx)
+int server_ingress(struct xdp_md *ctx)
 {
 	void *data_end = (void *)(long)ctx->data_end;
 	void *data = (void *)(long)ctx->data;
@@ -26,23 +26,31 @@ int filter_ingress(struct xdp_md *ctx)
 	struct ipv6hdr *ipv6 = (struct ipv6hdr *)(eth + 1);
 	struct srh *srh = (struct srh *)(ipv6 + 1);
 
-	if ((void *)(eth + 1) > data_end || eth->h_proto != bpf_htons(ETH_P_IPV6))
-		return XDP_PASS;
+	if ((void *)(eth + 1) > data_end) goto pass;
+	if (eth->h_proto != bpf_htons(ETH_P_IPV6)) goto pass;
+	if ((void *)(ipv6 + 1) > data_end) goto pass;
 
-	if ((void *)(ipv6 + 1) > data_end || ipv6->nexthdr != IPPROTO_ROUTING)
-		return XDP_PASS;
+	switch (ipv6->nexthdr)
+	{
+		case IPPROTO_ROUTING:
+			goto handle_srh;
+		default:
+			goto pass;
+	}
 
-	if (srh_check_boundaries(srh, data_end) < 0)
-		return XDP_DROP;
+handle_srh:
+	if (srh_check_boundaries(srh, data_end) < 0) goto drop;
+	if (store_incoming_triple(ctx, ipv6, srh) < 0) goto drop;
+	if (remove_srh(ctx, data, data_end, srh) < 0) goto drop;
 
-	if (store_incoming_triple(ctx, ipv6, srh) < 0)
-		return XDP_DROP;
+	bpf_printk("[server-ingress] srv6 packet processed\n");
+	goto pass;
 
-	if (remove_srh(ctx, data, data_end, srh) < 0)
-		return XDP_DROP;
-
-
-	bpf_printk("[xdp | server] packet processed\n");
-
+pass: 
+	bpf_printk("[server-ingress] pass\n");
 	return XDP_PASS;
+
+drop:
+	bpf_printk("[server-ingress] drop\n");
+	return XDP_DROP;
 }

@@ -27,7 +27,7 @@ func NewServer(interfaceName string) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not load TC program: %s", err)
 	}
-	xdpLinker := linker.NewXdpLinker(iface, xdpObjs.FilterIngress)
+	xdpLinker := linker.NewXdpLinker(iface, xdpObjs.ServerIngress)
 
 	// tcObjs, err := server.ReadServerTcObjects()
 	// if err != nil {
