@@ -119,30 +119,43 @@ static int parse_dns_query(struct xdp_md *ctx, void *query_start,
 	return -1;
 }
 
-static __always_inline int parsing_dns_answer(struct xdp_md *ctx, struct dns_hdr *dns, struct dns_query *query, struct dns_answer *answer, void *data_end) {
-	if ((void *)(dns + 1) > data_end) return -1;
-	if (dns->ans_count == 0) return -1;
+static __always_inline int parsing_dns_answer(struct xdp_md *ctx,
+											  struct dns_hdr *dns,
+											  struct dns_query *query,
+											  struct dns_answer *answer,
+											  void *data_end)
+{
+	if ((void *)(dns + 1) > data_end)
+		return -1;
+	if (dns->ans_count == 0)
+		return -1;
 
 	void *query_start = (void *)(dns + 1);
 
 	int query_length = parse_dns_query(ctx, query_start, query);
-	if (query_length < 1) return -1;
+	if (query_length < 1)
+		return -1;
 
 	int dns_answer_result = parse_dns_answer(ctx, dns, query_length, answer);
-	if (dns_answer_result < 0) return -1;
+	if (dns_answer_result < 0)
+		return -1;
 
 	return 0;
 }
 
-static __always_inline int store_dns_tuple(struct dns_query *query, struct dns_answer *answer)
+static __always_inline int store_dns_tuple(struct dns_query *query,
+										   struct dns_answer *answer)
 {
 	__u32 *domain_id;
 	domain_id = bpf_map_lookup_elem(&client_lookup_map, query->name);
-	if (!domain_id) return -1;
+	if (!domain_id)
+		return -1;
 
-	if (bpf_map_update_elem(&client_reverse_map, &answer->ipv6_address, domain_id, BPF_ANY) < 0) return -1;
+	if (bpf_map_update_elem(&client_reverse_map, &answer->ipv6_address,
+							domain_id, BPF_ANY) < 0)
+		return -1;
 
-	return 0;	
+	return 0;
 }
 
 #endif

@@ -12,9 +12,9 @@
 #include <bpf/bpf_helpers.h>
 
 #include "lib/client_maps.h"
-#include "lib/map_common.h"
 #include "lib/consts.h"
 #include "lib/dns.h"
+#include "lib/map_common.h"
 #include "lib/srv6.h"
 
 #define memcpy __builtin_memcpy
@@ -32,20 +32,22 @@ int client_ingress(struct xdp_md *ctx)
 	struct dns_hdr *dns;
 	struct srh *srh;
 
-	if ((void *)(eth + 1) > data_end) goto pass;
-	if (eth->h_proto != bpf_htons(ETH_P_IPV6)) goto pass;
-	if ((void *)(ipv6 + 1) > data_end) goto pass;
+	if ((void *)(eth + 1) > data_end)
+		goto pass;
+	if (eth->h_proto != bpf_htons(ETH_P_IPV6))
+		goto pass;
+	if ((void *)(ipv6 + 1) > data_end)
+		goto pass;
 
-	switch (ipv6->nexthdr)
-	{
-	case IPPROTO_UDP:
-		goto handle_dns;
-	case IPPROTO_TCP:
-		goto pass;
-	case IPPROTO_ROUTING:
-		goto handle_srh;
-	default:
-		goto pass;
+	switch (ipv6->nexthdr) {
+		case IPPROTO_UDP:
+			goto handle_dns;
+		case IPPROTO_TCP:
+			goto pass;
+		case IPPROTO_ROUTING:
+			goto handle_srh;
+		default:
+			goto pass;
 	}
 
 handle_dns:
@@ -53,22 +55,27 @@ handle_dns:
 	udp = (void *)(ipv6 + 1);
 	dns = (void *)(udp + 1);
 
-	if ((void *)(udp + 1) > data_end) goto pass;
-	if (udp->source != bpf_htons(UDP_P_DNS)) goto pass;
+	if ((void *)(udp + 1) > data_end)
+		goto pass;
+	if (udp->source != bpf_htons(UDP_P_DNS))
+		goto pass;
 
 	struct dns_query query;
 	struct dns_answer dns_answer;
 	if (parsing_dns_answer(ctx, dns, &query, &dns_answer, data_end) < 0)
 		goto pass;
 
-	if (store_dns_tuple(&query, &dns_answer) < 0) goto pass;
+	if (store_dns_tuple(&query, &dns_answer) < 0)
+		goto pass;
 
 	return XDP_PASS;
 
 handle_srh:
 	srh = (struct srh *)(ipv6 + 1);
-	if (srh_check_boundaries(srh, data_end) < 0) goto drop;
-	if (remove_srh(ctx, data, data_end, srh) < 0) goto drop;
+	if (srh_check_boundaries(srh, data_end) < 0)
+		goto drop;
+	if (remove_srh(ctx, data, data_end, srh) < 0)
+		goto drop;
 
 	bpf_printk("[client-ingress] handle_srh\n");
 	return XDP_PASS;

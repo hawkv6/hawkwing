@@ -12,8 +12,8 @@
 #include <bpf/bpf_helpers.h>
 
 #include "lib/consts.h"
-#include "lib/srv6.h"
 #include "lib/map_helpers.h"
+#include "lib/srv6.h"
 
 char _license[] SEC("license") = "GPL";
 
@@ -26,12 +26,14 @@ int server_ingress(struct xdp_md *ctx)
 	struct ipv6hdr *ipv6 = (struct ipv6hdr *)(eth + 1);
 	struct srh *srh = (struct srh *)(ipv6 + 1);
 
-	if ((void *)(eth + 1) > data_end) goto pass;
-	if (eth->h_proto != bpf_htons(ETH_P_IPV6)) goto pass;
-	if ((void *)(ipv6 + 1) > data_end) goto pass;
+	if ((void *)(eth + 1) > data_end)
+		goto pass;
+	if (eth->h_proto != bpf_htons(ETH_P_IPV6))
+		goto pass;
+	if ((void *)(ipv6 + 1) > data_end)
+		goto pass;
 
-	switch (ipv6->nexthdr)
-	{
+	switch (ipv6->nexthdr) {
 		case IPPROTO_ROUTING:
 			goto handle_srh;
 		default:
@@ -39,14 +41,17 @@ int server_ingress(struct xdp_md *ctx)
 	}
 
 handle_srh:
-	if (srh_check_boundaries(srh, data_end) < 0) goto drop;
-	if (store_incoming_triple(ctx, ipv6, srh) < 0) goto drop;
-	if (remove_srh(ctx, data, data_end, srh) < 0) goto drop;
+	if (srh_check_boundaries(srh, data_end) < 0)
+		goto drop;
+	if (store_incoming_triple(ctx, ipv6, srh) < 0)
+		goto drop;
+	if (remove_srh(ctx, data, data_end, srh) < 0)
+		goto drop;
 
 	bpf_printk("[server-ingress] srv6 packet processed\n");
 	goto pass;
 
-pass: 
+pass:
 	bpf_printk("[server-ingress] pass\n");
 	return XDP_PASS;
 

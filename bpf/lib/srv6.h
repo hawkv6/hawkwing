@@ -77,8 +77,7 @@ static __always_inline int srh_get_segment_list_len(struct srh *hdr)
 	return hdr->last_entry + 1;
 }
 
-static __always_inline int srh_check_boundaries(struct srh *hdr,
-												 void *end)
+static __always_inline int srh_check_boundaries(struct srh *hdr, void *end)
 {
 	if ((void *)hdr + sizeof(struct srh) > end ||
 		(void *)hdr + srh_get_hdr_len(hdr) > end)
@@ -87,7 +86,7 @@ static __always_inline int srh_check_boundaries(struct srh *hdr,
 }
 
 static __always_inline int remove_srh(struct xdp_md *ctx, void *data,
-										   void *data_end, struct srh *hdr)
+									  void *data_end, struct srh *hdr)
 {
 	struct ethhdr eth_copy;
 	struct ipv6hdr ipv6_copy;
@@ -123,13 +122,16 @@ static __always_inline int remove_srh(struct xdp_md *ctx, void *data,
 	return 0;
 }
 
-static __always_inline int add_srh(struct __sk_buff *skb, void *data, void *data_end, struct in6_addr *sids, __u8 sidlist_size)
+static __always_inline int add_srh(struct __sk_buff *skb, void *data,
+								   void *data_end, struct in6_addr *sids,
+								   __u8 sidlist_size)
 {
 	struct ipv6hdr *ipv6 = data + sizeof(struct ethhdr);
 	if (data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr) > data_end)
 		return -1;
 
-	int hdr_ext_len = (sizeof(struct srh) + sizeof(struct in6_addr) * sidlist_size - 8) / 8;
+	int hdr_ext_len =
+		(sizeof(struct srh) + sizeof(struct in6_addr) * sidlist_size - 8) / 8;
 	struct srh srh = {
 		.next_hdr = ipv6->nexthdr,
 		.hdr_ext_len = hdr_ext_len,
@@ -139,21 +141,28 @@ static __always_inline int add_srh(struct __sk_buff *skb, void *data, void *data
 	};
 
 	memcpy(&sids[0], &ipv6->daddr, sizeof(struct in6_addr));
-	ipv6->payload_len = bpf_htons(bpf_ntohs(ipv6->payload_len) + sizeof(struct srh) + sizeof(struct in6_addr) * sidlist_size);
+	ipv6->payload_len =
+		bpf_htons(bpf_ntohs(ipv6->payload_len) + sizeof(struct srh) +
+				  sizeof(struct in6_addr) * sidlist_size);
 	ipv6->nexthdr = SRV6_NEXT_HDR;
 	memcpy(&ipv6->daddr, &sids[sidlist_size - 1], sizeof(struct in6_addr));
 
 	if (bpf_skb_adjust_room(
-		skb, sizeof(struct srh) + sizeof(struct in6_addr) * sidlist_size, BPF_ADJ_ROOM_NET, 0) < 0)
+			skb, sizeof(struct srh) + sizeof(struct in6_addr) * sidlist_size,
+			BPF_ADJ_ROOM_NET, 0) < 0)
 		return -1;
 
-	if (bpf_skb_store_bytes(skb, sizeof(struct ethhdr) + sizeof(struct ipv6hdr), &srh, sizeof(struct srh), 0) < 0)
+	if (bpf_skb_store_bytes(skb, sizeof(struct ethhdr) + sizeof(struct ipv6hdr),
+							&srh, sizeof(struct srh), 0) < 0)
 		return -1;
 
-	if (bpf_skb_store_bytes(skb, sizeof(struct ethhdr) + sizeof(struct ipv6hdr) + sizeof(struct srh), sids, sizeof(struct in6_addr) * sidlist_size, 0) < 0)
+	if (bpf_skb_store_bytes(
+			skb,
+			sizeof(struct ethhdr) + sizeof(struct ipv6hdr) + sizeof(struct srh),
+			sids, sizeof(struct in6_addr) * sidlist_size, 0) < 0)
 		return -1;
 
-	return 0;	
+	return 0;
 }
 
 #endif

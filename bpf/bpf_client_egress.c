@@ -34,9 +34,12 @@ int client_egress(struct __sk_buff *skb)
 	struct ethhdr *eth = data;
 	struct ipv6hdr *ipv6 = (struct ipv6hdr *)(eth + 1);
 
-	if ((void *)(eth + 1) > data_end) goto pass;
-	if (eth->h_proto != bpf_htons(ETH_P_IPV6)) goto pass;
-	if ((void *)(ipv6 + 1) > data_end) goto pass;
+	if ((void *)(eth + 1) > data_end)
+		goto pass;
+	if (eth->h_proto != bpf_htons(ETH_P_IPV6))
+		goto pass;
+	if ((void *)(ipv6 + 1) > data_end)
+		goto pass;
 
 	if (ipv6->nexthdr != IPPROTO_UDP && ipv6->nexthdr != IPPROTO_TCP)
 		return TC_ACT_OK;
@@ -77,8 +80,9 @@ int client_egress(struct __sk_buff *skb)
 	// TODO make it somehow dynamic
 	__u8 num_sids = 3;
 
-	if (add_srh(skb, data, data_end, segment_list, num_sids) < 0) goto drop;
-		// return TC_ACT_OK;
+	if (add_srh(skb, data, data_end, segment_list, num_sids) < 0)
+		goto drop;
+	// return TC_ACT_OK;
 
 	bpf_printk("[tc-egress] srv6 packet send\n");
 
