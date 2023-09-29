@@ -1,39 +1,24 @@
 package client
 
 import (
+	"fmt"
+
 	"github.com/cilium/ebpf"
 	"github.com/hawkv6/hawkwing/pkg/bpf"
 )
 
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc $BPF_CLANG -cflags $BPF_CFLAGS xdp ../../../bpf/bpf_client_ingress.c -- -I../../../bpf
-//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc $BPF_CLANG -cflags $BPF_CFLAGS tc ../../../bpf/bpf_client_egress.c -- -I../../../bpf
+//go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc $BPF_CLANG -cflags $BPF_CFLAGS client ../../../bpf/bpf_client.c -- -I../../../bpf
 
-// ReadClientXdpObjects reads the XDP objects from the BPF filesystem.
-func ReadClientXdpObjects() (*xdpObjects, error) {
-	obj := &xdpObjects{}
+func ReadClientBpfObjects() (*clientObjects, error) {
+	obj := &clientObjects{}
 	ops := &ebpf.CollectionOptions{
 		Maps: ebpf.MapOptions{
 			PinPath: bpf.BpffsRoot,
 		},
 	}
-	err := loadXdpObjects(obj, ops)
+	err := loadClientObjects(obj, ops)
 	if err != nil {
-		return nil, err
-	}
-	return obj, nil
-}
-
-// ReadClientTcObjects reads the TC objects from the BPF filesystem.
-func ReadClientTcObjects() (*tcObjects, error) {
-	obj := &tcObjects{}
-	ops := &ebpf.CollectionOptions{
-		Maps: ebpf.MapOptions{
-			PinPath: bpf.BpffsRoot,
-		},
-	}
-	err := loadTcObjects(obj, ops)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not load client BPF objects: %s", err)
 	}
 	return obj, nil
 }

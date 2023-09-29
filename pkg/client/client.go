@@ -30,27 +30,24 @@ func NewClient(interfaceName string) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not lookup network iface %q: %s", interfaceName, err)
 	}
-	xdpObjs, err := client.ReadClientXdpObjects()
-	if err != nil {
-		return nil, fmt.Errorf("could not load XDP program: %s", err)
-	}
-	xdpLinker := linker.NewXdpLinker(iface, xdpObjs.InterceptDns)
-	tcObjs, err := client.ReadClientTcObjects()
-	if err != nil {
-		return nil, fmt.Errorf("could not load TC program: %s", err)
-	}
-	tcLinker := linker.NewTcLinker(iface, tcObjs.FilterEgress, "egress")
 
-	// TODO change this
+	clientObjs, err := client.ReadClientBpfObjects()
+	if err != nil {
+		return nil, fmt.Errorf("could not load client BPF objects: %s", err)
+	}
+
+	xdpLinker := linker.NewXdpLinker(iface, clientObjs.ClientIngress)
+	tcLinker := linker.NewTcLinker(iface, clientObjs.ClientEgress, "egress")
+
 	err = bpf.Mount()
 	if err != nil {
-		log.Fatalf("Could not mount BPF filesystem: %s", err)
+		log.Fatalf("could not mount BPF filesystem: %s", err)
 	}
 
 	clientMap := maps.NewClientMap()
 	err = clientMap.CreateClientDataMaps()
 	if err != nil {
-		log.Fatalf("Could not create client data maps: %s", err)
+		log.Fatalf("could not create client data maps: %s", err)
 	}
 
 	return &Client{
@@ -67,27 +64,27 @@ func (c *Client) Start() {
 	go func() {
 		defer c.wg.Done()
 		if err := c.xdpLinker.Attach(); err != nil {
-			log.WithError(err).Error("couldn't attach XDP program")
+			log.WithError(err).Error("could not attach client XDP program")
 		}
 	}()
 
 	go func() {
 		defer c.wg.Done()
 		if err := c.tcLinker.Attach(); err != nil {
-			log.WithError(err).Error("couldn't attach TC program")
+			log.WithError(err).Error("could not attach client TC program")
 		}
 	}()
 
-	log.Printf("Attached XDP program to iface %q", c.iface.Attrs().Name)
+	log.Printf("Client started on interface %q", c.iface.Attrs().Name)
 	log.Printf("Press Ctrl-C to exit and remove the program")
 }
 
 func (c *Client) Stop() {
 	if err := c.xdpLinker.Detach(); err != nil {
-		log.WithError(err).Error("couldn't detach XDP program")
+		log.WithError(err).Error("could not detach client XDP program")
 	}
 	if err := c.tcLinker.Detach(); err != nil {
-		log.WithError(err).Error("couldn't detach TC program")
+		log.WithError(err).Error("could not detach TC program")
 	}
 	c.wg.Wait()
 }

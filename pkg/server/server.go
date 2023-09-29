@@ -15,6 +15,7 @@ import (
 type Server struct {
 	iface     netlink.Link
 	xdpLinker *linker.XdpLinker
+	tcLinker  *linker.TcLinker
 	wg        *sync.WaitGroup
 }
 
@@ -23,44 +24,49 @@ func NewServer(interfaceName string) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not lookup network iface %q: %s", interfaceName, err)
 	}
-	xdpObjs, err := server.ReadServerXdpObjects()
-	if err != nil {
-		return nil, fmt.Errorf("could not load TC program: %s", err)
-	}
-	xdpLinker := linker.NewXdpLinker(iface, xdpObjs.FilterIngress)
 
-	// tcObjs, err := server.ReadServerTcObjects()
-	// if err != nil {
-	// 	return nil, fmt.Errorf("could not load TC program: %s", err)
-	// }
-	// tcLinker := linker.NewTcLinker(iface, tcObjs.FilterIngress, "ingress")
+	serverObjs, err := server.ReadServerBpfObjects()
+	if err != nil {
+		return nil, fmt.Errorf("could not load server bpf objects: %s", err)
+	}
+
+	xdpLinker := linker.NewXdpLinker(iface, serverObjs.ServerIngress)
+	tcLinker := linker.NewTcLinker(iface, serverObjs.ServerEgress, "ingress")
 
 	err = bpf.Mount()
 	if err != nil {
-		log.Fatalf("Could not mount BPF filesystem: %s", err)
+		log.Fatalf("could not mount BPF filesystem: %s", err)
 	}
 
 	serverMap := maps.NewServerMap()
 	err = serverMap.CreateServerDataMaps()
 	if err != nil {
-		log.Fatalf("Could not create server data maps: %s", err)
+		log.Fatalf("could not create server data maps: %s", err)
 	}
 
 	return &Server{
 		iface:     iface,
 		xdpLinker: xdpLinker,
+		tcLinker:  tcLinker,
 		wg:        &sync.WaitGroup{},
 	}, nil
 }
 
 func (s *Server) Start() {
-	s.wg.Add(1)
+	s.wg.Add(2)
 	go func() {
 		defer s.wg.Done()
 		err := s.xdpLinker.Attach()
-		// err := s.tcLinker.Attach()
 		if err != nil {
-			log.Fatalf("Could not attach TC program: %s", err)
+			log.Fatalf("could not attach server XDP program: %s", err)
+		}
+	}()
+
+	go func() {
+		defer s.wg.Done()
+		err := s.tcLinker.Attach()
+		if err != nil {
+			log.Fatalf("could not attach server TC program: %s", err)
 		}
 	}()
 
@@ -69,9 +75,11 @@ func (s *Server) Start() {
 }
 
 func (s *Server) Stop() {
-	// if err := s.tcLinker.Detach(); err != nil {
 	if err := s.xdpLinker.Detach(); err != nil {
-		log.Fatalf("Could not detach TC program: %s", err)
+		log.Fatalf("could not detach server XDP program: %s", err)
+	}
+	if err := s.tcLinker.Detach(); err != nil {
+		log.Fatalf("could not detach server TC program: %s", err)
 	}
 	s.wg.Wait()
 }
