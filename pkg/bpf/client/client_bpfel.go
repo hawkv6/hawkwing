@@ -78,6 +78,7 @@ type clientMapSpecs struct {
 	ClientOuterMap     *ebpf.MapSpec `ebpf:"client_outer_map"`
 	ClientReverseMap   *ebpf.MapSpec `ebpf:"client_reverse_map"`
 	ServerLookupMap    *ebpf.MapSpec `ebpf:"server_lookup_map"`
+	ServerTempSidMap   *ebpf.MapSpec `ebpf:"server_temp_sid_map"`
 	ServerTempValueMap *ebpf.MapSpec `ebpf:"server_temp_value_map"`
 }
 
@@ -105,6 +106,7 @@ type clientMaps struct {
 	ClientOuterMap     *ebpf.Map `ebpf:"client_outer_map"`
 	ClientReverseMap   *ebpf.Map `ebpf:"client_reverse_map"`
 	ServerLookupMap    *ebpf.Map `ebpf:"server_lookup_map"`
+	ServerTempSidMap   *ebpf.Map `ebpf:"server_temp_sid_map"`
 	ServerTempValueMap *ebpf.Map `ebpf:"server_temp_value_map"`
 }
 
@@ -115,6 +117,7 @@ func (m *clientMaps) Close() error {
 		m.ClientOuterMap,
 		m.ClientReverseMap,
 		m.ServerLookupMap,
+		m.ServerTempSidMap,
 		m.ServerTempValueMap,
 	)
 }

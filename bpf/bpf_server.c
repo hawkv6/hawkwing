@@ -14,6 +14,8 @@
 #include "lib/consts.h"
 #include "lib/srv6.h"
 #include "lib/map_helpers.h"
+#include "lib/tcp.h"
+#include "lib/udp.h"
 
 char _license[] SEC("license") = "GPL";
 
@@ -62,5 +64,49 @@ SEC("tc")
 int server_egress(struct __sk_buff *skb)
 {
 	bpf_printk("[server-egress] outgoing packet received\n");
+
+	void *data_end = (void *)(long)skb->data_end;
+	void *data = (void *)(long)skb->data;
+	struct ethhdr *eth = data;
+	struct ipv6hdr *ipv6 = (struct ipv6hdr *)(eth + 1);
+	struct in6_addr *segment_list;
+	__u32 *sidlist_size;
+	
+	if ((void *)(eth + 1) > data_end)
+		goto pass;
+	if (eth->h_proto != bpf_htons(ETH_P_IPV6))
+		goto pass;
+	if ((void *)(ipv6 + 1) > data_end)
+		goto pass;
+
+	switch (ipv6->nexthdr) {
+		case IPPROTO_UDP:
+			goto handle_srh;
+		case IPPROTO_TCP:
+			goto handle_srh;
+		default:
+			goto pass;
+	}
+
+handle_srh:
+
+	// if (server_get_sid(skb, ipv6, &segment_list, &sidlist_size) < 0) {
+	// 	bpf_printk("[server-egress] server_get_sid failed\n");
+	// 	goto drop;
+	// }
+
+
+	// if (add_srh(skb, data, data_end, segment_list, sidlist_size) < 0) {
+	// 	bpf_printk("[server-egress] add_srh failed\n");
+	// 	goto drop;
+	// }
+
+	// bpf_printk("[server-egress] srv6 packet send\n");
+	goto pass;
+
+pass:
 	return TC_ACT_OK;
+
+drop:
+	return TC_ACT_SHOT;
 }

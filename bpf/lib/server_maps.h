@@ -34,4 +34,10 @@ struct server_temp_value_map {
 	__type(value, struct server_lookup_value);
 } server_temp_value_map SEC(".maps");
 
+struct server_temp_sid_map {
+	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);
+	__uint(max_entries, 1);
+	__type(key, __u32);
+	__type(value, struct in6_addr[MAX_SEGMENTLIST_ENTRIES]);
+} server_temp_sid_map SEC(".maps");
 #endif

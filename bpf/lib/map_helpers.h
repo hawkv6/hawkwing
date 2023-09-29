@@ -129,6 +129,7 @@ static __always_inline int client_get_sid(struct __sk_buff *skb,
 		return -1;
 
 	__u16 dstport = 0;
+	// TODO: extract to function
 	switch (ipv6->nexthdr) {
 		case IPPROTO_TCP: {
 			struct tcphdr *tcp = (struct tcphdr *)(ipv6 + 1);
@@ -148,6 +149,58 @@ static __always_inline int client_get_sid(struct __sk_buff *skb,
 	*sid = bpf_map_lookup_elem(inner_map, &dstport);
 	if (!*sid)
 		return -1;
+
+	return 0;
+}
+
+static __always_inline int server_get_sid(struct __sk_buff *skb, struct ipv6hdr *ipv6, struct in6_addr **sid, __u32 **sidlist_size)
+{
+	__u16 dstport = 0;
+	// TODO: extract to function
+	switch (ipv6->nexthdr) {
+		case IPPROTO_TCP: {
+			struct tcphdr *tcp = (struct tcphdr *)(ipv6 + 1);
+			if (parse_tcp_hdr(skb, tcp, &dstport) < 0)
+				return -1;
+			break;
+		}
+		case IPPROTO_UDP: {
+			struct udphdr *udp = (struct udphdr *)(ipv6 + 1);
+			if (parse_udp_hdr(skb, udp, &dstport) < 0)
+				return -1;
+			break;
+		}
+		default:
+			return -1;
+	}
+
+	struct server_lookup_key key = {0};
+	key.addr = ipv6->daddr;
+	key.port = dstport;
+
+	struct server_lookup_value *lookup_value;
+	memset(&lookup_value, 0, sizeof(struct server_lookup_value));
+	lookup_value= bpf_map_lookup_elem(&server_lookup_map, &key);
+	if (!lookup_value) {
+		bpf_printk("ERROR: bpf_map_lookup_elem failed\n");
+		return -1;
+	}
+
+	memcpy(*sid, lookup_value->sidlist, sizeof(struct in6_addr) * MAX_SEGMENTLIST_ENTRIES);
+	memcpy(*sidlist_size, &lookup_value->sidlist_size, sizeof(__u32));
+
+	// __u32 tmp_key = 0;
+	// *sid = bpf_map_lookup_elem(&server_temp_sid_map, &tmp_key);
+	// if (!*sid)
+	// 	return -1;
+
+	// struct server_lookup_value *value = bpf_map_lookup_elem(&server_lookup_map, &key);
+	// if (!value)
+	// 	return -1;
+
+	// memcpy(sid, value->sidlist, sizeof(struct in6_addr) * MAX_SEGMENTLIST_ENTRIES);
+
+	// *server_looku= value->sidlist_size;
 
 	return 0;
 }
