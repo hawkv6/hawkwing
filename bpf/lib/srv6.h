@@ -55,18 +55,6 @@ struct srh {
 	struct in6_addr segments[0];
 } __attribute__((packed));
 
-struct srv6_hdr {
-	__u8 next_hdr;
-	__u8 hdr_ext_len;
-	__u8 routing_type;
-	__u8 segments_left;
-	__u8 last_entry;
-	__u8 flags;
-	__u16 tag;
-	// variable length of segment list entries
-	// length has to be get from the client_inner_map values
-} __attribute__((packed));
-
 static __always_inline int srh_get_hdr_len(struct srh *hdr)
 {
 	return (hdr->hdr_ext_len + 1) * 8;

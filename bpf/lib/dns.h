@@ -73,33 +73,22 @@ static int parse_dns_query(struct xdp_md *ctx, void *query_start,
 	void *cursor = query_start;
 	int namepos = 0;
 
-	// Fill dns_query.name with zero bytes
-	// Not doing so will make the verifier complain when dns_query is used as a
-	// key in bpf_map_lookup
 	for (i = 0; i < MAX_DNS_NAME_LEN; i++) {
 		q->name[i] = 0;
 	}
-	// Fill record_type and class with default values to satisfy verifier
+
 	q->record_type = 0;
 	q->record_class = 0;
 
 	for (i = 0; i < MAX_DNS_NAME_LEN; i++) {
-		// Boundary check of cursor. Verifier requires a +1 here.
-		// Probably because we are advancing the pointer at the end of the loop
 		if (cursor + 1 > data_end) {
 			break;
 		}
 
-		// If separator is zero we've reached the end of the domain query
 		if (*(char *)(cursor) == 0) {
 
-			// We've reached the end of the query name.
-			// This will be followed by 2x 2 bytes: the dns type and dns class.
 			if (cursor + 5 > data_end) {
-#ifdef DEBUG
-				bpf_printk("Error: boundary exceeded while retrieving DNS "
-						   "record type and class");
-#endif
+				break;
 			} else {
 				q->record_type = bpf_htons(*(__u16 *)(cursor + 1));
 				q->record_class = bpf_htons(*(__u16 *)(cursor + 3));

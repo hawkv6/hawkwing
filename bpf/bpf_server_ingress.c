@@ -52,10 +52,8 @@ handle_srh:
 	goto pass;
 
 pass:
-	bpf_printk("[server-ingress] pass\n");
 	return XDP_PASS;
 
 drop:
-	bpf_printk("[server-ingress] drop\n");
 	return XDP_DROP;
 }

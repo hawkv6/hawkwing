@@ -51,7 +51,6 @@ int client_ingress(struct xdp_md *ctx)
 	}
 
 handle_dns:
-	bpf_printk("[client-ingress] handle_dns\n");
 	udp = (void *)(ipv6 + 1);
 	dns = (void *)(udp + 1);
 
@@ -68,7 +67,8 @@ handle_dns:
 	if (store_dns_tuple(&query, &dns_answer) < 0)
 		goto pass;
 
-	return XDP_PASS;
+	bpf_printk("[client-ingress] handled dns\n");
+	goto pass;
 
 handle_srh:
 	srh = (struct srh *)(ipv6 + 1);
@@ -77,14 +77,12 @@ handle_srh:
 	if (remove_srh(ctx, data, data_end, srh) < 0)
 		goto drop;
 
-	bpf_printk("[client-ingress] handle_srh\n");
-	return XDP_PASS;
+	bpf_printk("[client-ingress] srv6 packet processed\n");
+	goto pass;
 
 pass:
-	bpf_printk("[client-ingress] pass\n");
 	return XDP_PASS;
 
 drop:
-	bpf_printk("[client-ingress] drop\n");
 	return XDP_DROP;
 }

@@ -12,13 +12,15 @@ import (
 	"github.com/cilium/ebpf"
 )
 
+type xdpIn6Addr struct{ In6U struct{ U6Addr8 [16]uint8 } }
+
 type xdpServerLookupKey struct {
-	Addr struct{ In6U struct{ U6Addr8 [16]uint8 } }
+	Addr xdpIn6Addr
 	Port uint16
 }
 
 type xdpServerLookupValue struct {
-	Sidlist     [10]struct{ In6U struct{ U6Addr8 [16]uint8 } }
+	Sidlist     [10]xdpIn6Addr
 	SidlistSize int32
 }
 
@@ -70,6 +72,10 @@ type xdpProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type xdpMapSpecs struct {
+	ClientInnerMap     *ebpf.MapSpec `ebpf:"client_inner_map"`
+	ClientLookupMap    *ebpf.MapSpec `ebpf:"client_lookup_map"`
+	ClientOuterMap     *ebpf.MapSpec `ebpf:"client_outer_map"`
+	ClientReverseMap   *ebpf.MapSpec `ebpf:"client_reverse_map"`
 	ServerLookupMap    *ebpf.MapSpec `ebpf:"server_lookup_map"`
 	ServerTempValueMap *ebpf.MapSpec `ebpf:"server_temp_value_map"`
 }
@@ -93,12 +99,20 @@ func (o *xdpObjects) Close() error {
 //
 // It can be passed to loadXdpObjects or ebpf.CollectionSpec.LoadAndAssign.
 type xdpMaps struct {
+	ClientInnerMap     *ebpf.Map `ebpf:"client_inner_map"`
+	ClientLookupMap    *ebpf.Map `ebpf:"client_lookup_map"`
+	ClientOuterMap     *ebpf.Map `ebpf:"client_outer_map"`
+	ClientReverseMap   *ebpf.Map `ebpf:"client_reverse_map"`
 	ServerLookupMap    *ebpf.Map `ebpf:"server_lookup_map"`
 	ServerTempValueMap *ebpf.Map `ebpf:"server_temp_value_map"`
 }
 
 func (m *xdpMaps) Close() error {
 	return _XdpClose(
+		m.ClientInnerMap,
+		m.ClientLookupMap,
+		m.ClientOuterMap,
+		m.ClientReverseMap,
 		m.ServerLookupMap,
 		m.ServerTempValueMap,
 	)

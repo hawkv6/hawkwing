@@ -14,6 +14,9 @@
 
 #include "map_common.h"
 #include "server_maps.h"
+#include "client_maps.h"
+#include "tcp.h"
+#include "udp.h"
 
 #define memset __builtin_memset
 #define memcpy __builtin_memcpy
@@ -107,6 +110,42 @@ store_incoming_triple(struct xdp_md *ctx, struct ipv6hdr *ipv6, struct srh *srh)
 	value->sidlist[0] = ipv6->saddr;
 
 	if (bpf_map_update_elem(&server_lookup_map, &key, value, BPF_ANY) < 0)
+		return -1;
+
+	return 0;
+}
+
+static __always_inline int client_get_sid(struct __sk_buff *skb, struct ipv6hdr *ipv6,
+										  struct in6_addr **sid)
+{
+	__u32 *domain_id = bpf_map_lookup_elem(&client_reverse_map, &ipv6->daddr);
+	if (!domain_id)
+		return -1;
+
+	struct bpf_elf_map *inner_map =
+		bpf_map_lookup_elem(&client_outer_map, domain_id);
+	if (!inner_map)
+		return -1;
+
+	__u16 dstport = 0;
+	switch (ipv6->nexthdr) {
+		case IPPROTO_TCP: {
+			struct tcphdr *tcp = (struct tcphdr *)(ipv6 + 1);
+			if (parse_tcp_hdr(skb, tcp, &dstport) < 0)
+				return -1;
+			break;
+		}
+		case IPPROTO_UDP: {
+			struct udphdr *udp = (struct udphdr *)(ipv6 + 1);
+			if (parse_udp_hdr(skb, udp, &dstport) < 0)
+				return -1;
+			break;
+		}
+		default:
+			return -1;
+	}
+	*sid = bpf_map_lookup_elem(inner_map, &dstport);
+	if (!*sid)
 		return -1;
 
 	return 0;
