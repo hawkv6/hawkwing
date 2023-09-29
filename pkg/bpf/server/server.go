@@ -1,6 +1,8 @@
 package server
 
 import (
+	"fmt"
+
 	"github.com/cilium/ebpf"
 	"github.com/hawkv6/hawkwing/pkg/bpf"
 )
@@ -16,7 +18,7 @@ func ReadServerBpfObjects() (*serverObjects, error) {
 	}
 	err := loadServerObjects(obj, ops)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("could not load server BPF objects: %s", err)
 	}
 	return obj, nil
 }
