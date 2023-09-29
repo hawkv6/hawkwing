@@ -115,7 +115,8 @@ store_incoming_triple(struct xdp_md *ctx, struct ipv6hdr *ipv6, struct srh *srh)
 	return 0;
 }
 
-static __always_inline int client_get_sid(struct __sk_buff *skb, struct ipv6hdr *ipv6,
+static __always_inline int client_get_sid(struct __sk_buff *skb,
+										  struct ipv6hdr *ipv6,
 										  struct in6_addr **sid)
 {
 	__u32 *domain_id = bpf_map_lookup_elem(&client_reverse_map, &ipv6->daddr);

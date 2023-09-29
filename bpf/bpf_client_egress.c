@@ -40,7 +40,7 @@ int client_egress(struct __sk_buff *skb)
 	if ((void *)(ipv6 + 1) > data_end)
 		goto pass;
 
-	switch(ipv6->nexthdr) {
+	switch (ipv6->nexthdr) {
 		case IPPROTO_UDP:
 			goto handle_srh;
 		case IPPROTO_TCP:
