@@ -13,7 +13,7 @@
 
 #include "lib/consts.h"
 #include "lib/srv6.h"
-#include "lib/map_helpers.h"
+#include "lib/server_map_helpers.h"
 #include "lib/tcp.h"
 #include "lib/udp.h"
 
@@ -69,8 +69,7 @@ int server_egress(struct __sk_buff *skb)
 	void *data = (void *)(long)skb->data;
 	struct ethhdr *eth = data;
 	struct ipv6hdr *ipv6 = (struct ipv6hdr *)(eth + 1);
-	struct in6_addr *segment_list;
-	__u32 *sidlist_size;
+	struct sidlist_data *sidlist_data;
 	
 	if ((void *)(eth + 1) > data_end)
 		goto pass;
@@ -89,19 +88,15 @@ int server_egress(struct __sk_buff *skb)
 	}
 
 handle_srh:
+	if (server_get_sid_test(skb, ipv6, &sidlist_data) < 0)
+		goto drop;
 
-	// if (server_get_sid(skb, ipv6, &segment_list, &sidlist_size) < 0) {
-	// 	bpf_printk("[server-egress] server_get_sid failed\n");
-	// 	goto drop;
-	// }
-
-
-	// if (add_srh(skb, data, data_end, segment_list, sidlist_size) < 0) {
+	// if (add_srh(skb, data, data_end, sidlist_data->sidlist, sidlist_data->sidlist_size) < 0) {
 	// 	bpf_printk("[server-egress] add_srh failed\n");
 	// 	goto drop;
 	// }
 
-	// bpf_printk("[server-egress] srv6 packet send\n");
+	bpf_printk("[server-egress] srv6 packet send\n");
 	goto pass;
 
 pass:

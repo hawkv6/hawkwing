@@ -19,7 +19,7 @@
 #include "lib/dns.h"
 #include "lib/map_common.h"
 #include "lib/srv6.h"
-#include "lib/map_helpers.h"
+#include "lib/client_map_helpers.h"
 
 #define memcpy __builtin_memcpy
 

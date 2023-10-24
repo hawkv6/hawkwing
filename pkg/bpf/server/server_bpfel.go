@@ -12,16 +12,14 @@ import (
 	"github.com/cilium/ebpf"
 )
 
-type serverIn6Addr struct{ In6U struct{ U6Addr8 [16]uint8 } }
-
 type serverServerLookupKey struct {
-	Addr serverIn6Addr
+	Addr struct{ In6U struct{ U6Addr8 [16]uint8 } }
 	Port uint16
 }
 
-type serverServerLookupValue struct {
-	Sidlist     [10]serverIn6Addr
-	SidlistSize int32
+type serverSidlistData struct {
+	SidlistSize uint32
+	Sidlist     [10]struct{ In6U struct{ U6Addr8 [16]uint8 } }
 }
 
 // loadServer returns the embedded CollectionSpec for server.
@@ -73,10 +71,7 @@ type serverProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type serverMapSpecs struct {
-	ClientInnerMap     *ebpf.MapSpec `ebpf:"client_inner_map"`
-	ClientLookupMap    *ebpf.MapSpec `ebpf:"client_lookup_map"`
-	ClientOuterMap     *ebpf.MapSpec `ebpf:"client_outer_map"`
-	ClientReverseMap   *ebpf.MapSpec `ebpf:"client_reverse_map"`
+	PercpuSidlistMap   *ebpf.MapSpec `ebpf:"percpu_sidlist_map"`
 	ServerLookupMap    *ebpf.MapSpec `ebpf:"server_lookup_map"`
 	ServerTempSidMap   *ebpf.MapSpec `ebpf:"server_temp_sid_map"`
 	ServerTempValueMap *ebpf.MapSpec `ebpf:"server_temp_value_map"`
@@ -101,10 +96,7 @@ func (o *serverObjects) Close() error {
 //
 // It can be passed to loadServerObjects or ebpf.CollectionSpec.LoadAndAssign.
 type serverMaps struct {
-	ClientInnerMap     *ebpf.Map `ebpf:"client_inner_map"`
-	ClientLookupMap    *ebpf.Map `ebpf:"client_lookup_map"`
-	ClientOuterMap     *ebpf.Map `ebpf:"client_outer_map"`
-	ClientReverseMap   *ebpf.Map `ebpf:"client_reverse_map"`
+	PercpuSidlistMap   *ebpf.Map `ebpf:"percpu_sidlist_map"`
 	ServerLookupMap    *ebpf.Map `ebpf:"server_lookup_map"`
 	ServerTempSidMap   *ebpf.Map `ebpf:"server_temp_sid_map"`
 	ServerTempValueMap *ebpf.Map `ebpf:"server_temp_value_map"`
@@ -112,10 +104,7 @@ type serverMaps struct {
 
 func (m *serverMaps) Close() error {
 	return _ServerClose(
-		m.ClientInnerMap,
-		m.ClientLookupMap,
-		m.ClientOuterMap,
-		m.ClientReverseMap,
+		m.PercpuSidlistMap,
 		m.ServerLookupMap,
 		m.ServerTempSidMap,
 		m.ServerTempValueMap,

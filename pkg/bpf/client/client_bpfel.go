@@ -14,16 +14,6 @@ import (
 
 type clientIn6Addr struct{ In6U struct{ U6Addr8 [16]uint8 } }
 
-type clientServerLookupKey struct {
-	Addr clientIn6Addr
-	Port uint16
-}
-
-type clientServerLookupValue struct {
-	Sidlist     [10]clientIn6Addr
-	SidlistSize int32
-}
-
 // loadClient returns the embedded CollectionSpec for client.
 func loadClient() (*ebpf.CollectionSpec, error) {
 	reader := bytes.NewReader(_ClientBytes)
@@ -73,13 +63,11 @@ type clientProgramSpecs struct {
 //
 // It can be passed ebpf.CollectionSpec.Assign.
 type clientMapSpecs struct {
-	ClientInnerMap     *ebpf.MapSpec `ebpf:"client_inner_map"`
-	ClientLookupMap    *ebpf.MapSpec `ebpf:"client_lookup_map"`
-	ClientOuterMap     *ebpf.MapSpec `ebpf:"client_outer_map"`
-	ClientReverseMap   *ebpf.MapSpec `ebpf:"client_reverse_map"`
-	ServerLookupMap    *ebpf.MapSpec `ebpf:"server_lookup_map"`
-	ServerTempSidMap   *ebpf.MapSpec `ebpf:"server_temp_sid_map"`
-	ServerTempValueMap *ebpf.MapSpec `ebpf:"server_temp_value_map"`
+	ClientInnerMap   *ebpf.MapSpec `ebpf:"client_inner_map"`
+	ClientLookupMap  *ebpf.MapSpec `ebpf:"client_lookup_map"`
+	ClientOuterMap   *ebpf.MapSpec `ebpf:"client_outer_map"`
+	ClientReverseMap *ebpf.MapSpec `ebpf:"client_reverse_map"`
+	PercpuSidlistMap *ebpf.MapSpec `ebpf:"percpu_sidlist_map"`
 }
 
 // clientObjects contains all objects after they have been loaded into the kernel.
@@ -101,13 +89,11 @@ func (o *clientObjects) Close() error {
 //
 // It can be passed to loadClientObjects or ebpf.CollectionSpec.LoadAndAssign.
 type clientMaps struct {
-	ClientInnerMap     *ebpf.Map `ebpf:"client_inner_map"`
-	ClientLookupMap    *ebpf.Map `ebpf:"client_lookup_map"`
-	ClientOuterMap     *ebpf.Map `ebpf:"client_outer_map"`
-	ClientReverseMap   *ebpf.Map `ebpf:"client_reverse_map"`
-	ServerLookupMap    *ebpf.Map `ebpf:"server_lookup_map"`
-	ServerTempSidMap   *ebpf.Map `ebpf:"server_temp_sid_map"`
-	ServerTempValueMap *ebpf.Map `ebpf:"server_temp_value_map"`
+	ClientInnerMap   *ebpf.Map `ebpf:"client_inner_map"`
+	ClientLookupMap  *ebpf.Map `ebpf:"client_lookup_map"`
+	ClientOuterMap   *ebpf.Map `ebpf:"client_outer_map"`
+	ClientReverseMap *ebpf.Map `ebpf:"client_reverse_map"`
+	PercpuSidlistMap *ebpf.Map `ebpf:"percpu_sidlist_map"`
 }
 
 func (m *clientMaps) Close() error {
@@ -116,9 +102,7 @@ func (m *clientMaps) Close() error {
 		m.ClientLookupMap,
 		m.ClientOuterMap,
 		m.ClientReverseMap,
-		m.ServerLookupMap,
-		m.ServerTempSidMap,
-		m.ServerTempValueMap,
+		m.PercpuSidlistMap,
 	)
 }
 

@@ -7,6 +7,7 @@
 #include <linux/udp.h>
 
 #include "consts.h"
+#include "map_common.h"
 
 #define SRV6_NEXT_HDR 43	/* Routing header. */
 #define SRV6_HDR_EXT_LEN 0	/* Routing header extension length. */
@@ -128,12 +129,30 @@ static __always_inline int add_srh(struct __sk_buff *skb, void *data,
 		.last_entry = sidlist_size - 1,
 	};
 
-	memcpy(&sids[0], &ipv6->daddr, sizeof(struct in6_addr));
+	// use percpu map to store sidlist temporary
+	struct in6_addr *percpu_sidlist;
+	__u32 percpu_sidlist_key = 0;
+	percpu_sidlist = bpf_map_lookup_elem(&percpu_sidlist_map, &percpu_sidlist_key);
+	if (!percpu_sidlist)
+		return -1;
+	memset(percpu_sidlist, 0, sizeof(struct in6_addr) * MAX_SEGMENTLIST_ENTRIES);
+
+	// memcpy(percpu_sidlist, sids, sizeof(struct in6_addr) * MAX_SEGMENTLIST_ENTRIES);
+	for (int i = 0; i < sidlist_size; i++) {
+		if (!(i < sidlist_size)) {
+			break;
+		}
+		memcpy(&percpu_sidlist[i], &sids[i], sizeof(struct in6_addr));
+	}
+
+	// memcpy(&sids[0], &ipv6->daddr, sizeof(struct in6_addr));
+	memcpy(&percpu_sidlist[0], &ipv6->daddr, sizeof(struct in6_addr));
 	ipv6->payload_len =
 		bpf_htons(bpf_ntohs(ipv6->payload_len) + sizeof(struct srh) +
 				  sizeof(struct in6_addr) * sidlist_size);
 	ipv6->nexthdr = SRV6_NEXT_HDR;
-	memcpy(&ipv6->daddr, &sids[sidlist_size - 1], sizeof(struct in6_addr));
+	// memcpy(&ipv6->daddr, &sids[sidlist_size - 1], sizeof(struct in6_addr));
+	memcpy(&ipv6->daddr, &percpu_sidlist[sidlist_size - 1], sizeof(struct in6_addr));
 
 	if (bpf_skb_adjust_room(
 			skb, sizeof(struct srh) + sizeof(struct in6_addr) * sidlist_size,
@@ -144,10 +163,15 @@ static __always_inline int add_srh(struct __sk_buff *skb, void *data,
 							&srh, sizeof(struct srh), 0) < 0)
 		return -1;
 
+	// if (bpf_skb_store_bytes(
+	// 		skb,
+	// 		sizeof(struct ethhdr) + sizeof(struct ipv6hdr) + sizeof(struct srh),
+	// 		sids, sizeof(struct in6_addr) * sidlist_size, 0) < 0)
+	// 	return -1;
 	if (bpf_skb_store_bytes(
 			skb,
 			sizeof(struct ethhdr) + sizeof(struct ipv6hdr) + sizeof(struct srh),
-			sids, sizeof(struct in6_addr) * sidlist_size, 0) < 0)
+			percpu_sidlist, sizeof(struct in6_addr) * sidlist_size, 0) < 0)
 		return -1;
 
 	return 0;
