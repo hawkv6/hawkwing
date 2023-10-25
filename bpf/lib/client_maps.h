@@ -14,8 +14,8 @@ struct client_inner_map {
 	__uint(type, BPF_MAP_TYPE_LRU_HASH);
 	__uint(max_entries, MAX_MAP_ENTRIES);
 	__type(key, __u16); // dstport
-	__type(value, struct in6_addr[MAX_SEGMENTLIST_ENTRIES]);
-	// __type(value, struct sid_lookup_value); // TODO check if this works
+	// __type(value, struct in6_addr[MAX_SEGMENTLIST_ENTRIES]);
+	__type(value, struct sidlist_data); // TODO check if this works
 } client_inner_map SEC(".maps");
 
 struct client_outer_map {

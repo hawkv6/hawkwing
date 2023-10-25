@@ -36,7 +36,7 @@ func NewClientMap() *ClientMap {
 			Name:       "client_inner_map",
 			Type:       ebpf.LRUHash,
 			KeySize:    2,
-			ValueSize:  160, // TODO use this when storing struct 164
+			ValueSize:  164, // TODO use this when storing struct 164
 			MaxEntries: 1,
 		},
 	}
@@ -54,11 +54,18 @@ func (cm *ClientMap) clientInnerMapSpecs() map[string]*ebpf.MapSpec {
 		innerMapSpec.Contents = make([]ebpf.MapKV, len(services))
 		for i, service := range services {
 			// TODO - check or remove
-			// value := GenerateSidLookupValue(service.Sid)
-			value := SidToInet6Sid(service.Sid)
+			// value := GenerateSidLookupValueTest(service.Sid)
+			// fmt.Println(unsafe.Sizeof(value))
+			// b, err := value.Marshal()
+			// fmt.Println(len(b))
+			// if err != nil {
+			// 	panic(err)
+			// }
+			// value := SidToInet6Sid(service.Sid)
 			innerMapSpec.Contents[uint32(i)] = ebpf.MapKV{
 				Key:   uint16(service.Port),
-				Value: value,
+				Value: SidToInet6Sid(service.Sid),
+				// Value: b,
 			}
 		}
 		innerMapSpecs[key] = innerMapSpec

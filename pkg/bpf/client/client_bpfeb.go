@@ -14,6 +14,11 @@ import (
 
 type clientIn6Addr struct{ In6U struct{ U6Addr8 [16]uint8 } }
 
+type clientSidlistData struct {
+	SidlistSize uint32
+	Sidlist     [10]clientIn6Addr
+}
+
 // loadClient returns the embedded CollectionSpec for client.
 func loadClient() (*ebpf.CollectionSpec, error) {
 	reader := bytes.NewReader(_ClientBytes)
