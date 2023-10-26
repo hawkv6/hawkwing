@@ -89,7 +89,7 @@ handle_srh:
 	if (server_get_sid_test(skb, ipv6, &sidlist_data) < 0)
 		goto drop;
 
-	if (add_srh_server(skb, data, data_end, sidlist_data) < 0) {
+	if (add_srh(skb, data, data_end, sidlist_data) < 0) {
 		bpf_printk("[server-egress] add_srh failed\n");
 		goto drop;
 	}

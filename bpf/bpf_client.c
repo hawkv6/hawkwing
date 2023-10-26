@@ -99,6 +99,7 @@ int client_egress(struct __sk_buff *skb)
 	struct ethhdr *eth = data;
 	struct ipv6hdr *ipv6 = (struct ipv6hdr *)(eth + 1);
 	struct in6_addr *segment_list;
+	struct sidlist_data sidlist_data = { 0 };
 
 	if ((void *)(eth + 1) > data_end)
 		goto pass;
@@ -120,10 +121,18 @@ handle_srh:
 	if (client_get_sid(skb, ipv6, &segment_list) < 0)
 		goto pass;
 
-	// TODO make it somehow dynamic
-	__u8 num_sids = 3;
+	sidlist_data.sidlist_size = 3;
 
-	if (add_srh(skb, data, data_end, segment_list, num_sids) < 0)
+	for (__u8 i = 0; i < sidlist_data.sidlist_size; i++) {
+		sidlist_data.sidlist[i] = segment_list[i];
+	}
+
+	// TODO make it somehow dynamic
+	// __u8 num_sids = 3;
+
+	// if (add_srh(skb, data, data_end, segment_list, num_sids) < 0)
+	// 	goto drop;
+	if (add_srh(skb, data, data_end, &sidlist_data) < 0)
 		goto drop;
 
 	bpf_printk("[client-egress] srv6 packet send\n");
