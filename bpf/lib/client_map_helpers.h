@@ -14,8 +14,7 @@
 
 #include "map_common.h"
 #include "client_maps.h"
-#include "tcp.h"
-#include "udp.h"
+#include "ipproto.h"
 
 static __always_inline int client_get_sid(struct __sk_buff *skb,
 										  struct ipv6hdr *ipv6,
@@ -31,25 +30,35 @@ static __always_inline int client_get_sid(struct __sk_buff *skb,
 		return -1;
 
 	__u16 dstport = 0;
-	// TODO: extract to function
-	switch (ipv6->nexthdr) {
-		case IPPROTO_TCP: {
-			struct tcphdr *tcp = (struct tcphdr *)(ipv6 + 1);
-			if (parse_tcp_hdr(skb, tcp, &dstport) < 0)
-				return -1;
-			break;
-		}
-		case IPPROTO_UDP: {
-			struct udphdr *udp = (struct udphdr *)(ipv6 + 1);
-			if (parse_udp_hdr(skb, udp, &dstport) < 0)
-				return -1;
-			break;
-		}
-		default:
-			return -1;
-	}
+	if (parse_ipproto_dstport(skb, ipv6, &dstport) < 0)
+		return -1;
+
 	*sid = bpf_map_lookup_elem(inner_map, &dstport);
 	if (!*sid)
+		return -1;
+
+	return 0;
+}
+
+static __always_inline int client_get_sid_test(struct __sk_buff *skb,
+										  struct ipv6hdr *ipv6,
+										  struct sidlist_data **sidlist_data)
+{
+	__u32 *domain_id = bpf_map_lookup_elem(&client_reverse_map, &ipv6->daddr);
+	if (!domain_id)
+		return -1;
+
+	struct bpf_elf_map *inner_map =
+		bpf_map_lookup_elem(&client_outer_map, domain_id);
+	if (!inner_map)
+		return -1;
+
+	__u16 dstport = 0;
+	if (parse_ipproto_dstport(skb, ipv6, &dstport) < 0)
+		return -1;
+
+	*sidlist_data = bpf_map_lookup_elem(inner_map, &dstport);
+	if (!*sidlist_data)
 		return -1;
 
 	return 0;

@@ -14,8 +14,7 @@
 
 #include "map_common.h"
 #include "server_maps.h"
-#include "tcp.h"
-#include "udp.h"
+#include "ipproto.h"
 
 #define memset __builtin_memset
 #define memcpy __builtin_memcpy
@@ -157,23 +156,8 @@ store_incoming_triple(struct xdp_md *ctx, struct ipv6hdr *ipv6, struct srh *srh)
 static __always_inline int server_get_sid_test(struct __sk_buff *skb, struct ipv6hdr *ipv6, struct sidlist_data **sidlist_data)
 {
 	__u16 dstport = 0;
-	// TODO: extract to function
-	switch (ipv6->nexthdr) {
-		case IPPROTO_TCP: {
-			struct tcphdr *tcp = (struct tcphdr *)(ipv6 + 1);
-			if (parse_tcp_hdr(skb, tcp, &dstport) < 0)
-				return -1;
-			break;
-		}
-		case IPPROTO_UDP: {
-			struct udphdr *udp = (struct udphdr *)(ipv6 + 1);
-			if (parse_udp_hdr(skb, udp, &dstport) < 0)
-				return -1;
-			break;
-		}
-		default:
-			return -1;
-	}
+	if (parse_ipproto_dstport(skb, ipv6, &dstport) < 0)
+		return -1;
 
 	struct server_lookup_key key = {
 		.addr = ipv6->daddr,

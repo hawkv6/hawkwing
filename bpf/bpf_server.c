@@ -14,8 +14,6 @@
 #include "lib/consts.h"
 #include "lib/srv6.h"
 #include "lib/server_map_helpers.h"
-#include "lib/tcp.h"
-#include "lib/udp.h"
 
 char _license[] SEC("license") = "GPL";
 
