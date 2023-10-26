@@ -113,47 +113,7 @@ store_incoming_triple(struct xdp_md *ctx, struct ipv6hdr *ipv6, struct srh *srh)
 	return 0;
 }
 
-// static __always_inline struct server_lookup_value* server_get_sid(struct __sk_buff *skb, struct ipv6hdr *ipv6)
-// {
-// 	// struct server_lookup_value ret_value = {0};
-// 	__u16 dstport = 0;
-// 	// TODO: extract to function
-// 	switch (ipv6->nexthdr) {
-// 		case IPPROTO_TCP: {
-// 			struct tcphdr *tcp = (struct tcphdr *)(ipv6 + 1);
-// 			if (parse_tcp_hdr(skb, tcp, &dstport) < 0)
-// 				// return ret_value;
-// 				return NULL;
-// 			break;
-// 		}
-// 		case IPPROTO_UDP: {
-// 			struct udphdr *udp = (struct udphdr *)(ipv6 + 1);
-// 			if (parse_udp_hdr(skb, udp, &dstport) < 0)
-// 				return NULL;
-// 				// return ret_value;
-// 			break;
-// 		}
-// 		default:
-// 			return NULL;
-// 			// return ret_value;
-// 	}
-
-// 	struct server_lookup_key key = {
-// 		.addr = ipv6->daddr,
-// 		.port = dstport
-// 	};
-
-// 	struct server_lookup_value *lookup_value = bpf_map_lookup_elem(&server_lookup_map, &key);
-// 	if (!lookup_value) {
-// 		return NULL;
-// 		// return ret_value;
-// 	}
-	
-// 	// memcpy(&ret_value, lookup_value, sizeof(struct server_lookup_value));
-// 	return lookup_value;
-// }
-
-static __always_inline int server_get_sid_test(struct __sk_buff *skb, struct ipv6hdr *ipv6, struct sidlist_data **sidlist_data)
+static __always_inline int server_get_sid(struct __sk_buff *skb, struct ipv6hdr *ipv6, struct sidlist_data **sidlist_data)
 {
 	__u16 dstport = 0;
 	if (parse_ipproto_dstport(skb, ipv6, &dstport) < 0)
