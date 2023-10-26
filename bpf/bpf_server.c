@@ -63,8 +63,6 @@ drop:
 SEC("tc")
 int server_egress(struct __sk_buff *skb)
 {
-	bpf_printk("[server-egress] outgoing packet received\n");
-
 	void *data_end = (void *)(long)skb->data_end;
 	void *data = (void *)(long)skb->data;
 	struct ethhdr *eth = data;
@@ -91,10 +89,10 @@ handle_srh:
 	if (server_get_sid_test(skb, ipv6, &sidlist_data) < 0)
 		goto drop;
 
-	// if (add_srh(skb, data, data_end, sidlist_data->sidlist, sidlist_data->sidlist_size) < 0) {
-	// 	bpf_printk("[server-egress] add_srh failed\n");
-	// 	goto drop;
-	// }
+	if (add_srh_server(skb, data, data_end, sidlist_data) < 0) {
+		bpf_printk("[server-egress] add_srh failed\n");
+		goto drop;
+	}
 
 	bpf_printk("[server-egress] srv6 packet send\n");
 	goto pass;
