@@ -19,7 +19,7 @@
 #include "lib/dns.h"
 #include "lib/map_common.h"
 #include "lib/srv6.h"
-#include "lib/map_helpers.h"
+#include "lib/client_map_helpers.h"
 
 #define memcpy __builtin_memcpy
 
@@ -98,7 +98,7 @@ int client_egress(struct __sk_buff *skb)
 	void *data = (void *)(long)skb->data;
 	struct ethhdr *eth = data;
 	struct ipv6hdr *ipv6 = (struct ipv6hdr *)(eth + 1);
-	struct in6_addr *segment_list;
+	struct sidlist_data *sidlist_data;
 
 	if ((void *)(eth + 1) > data_end)
 		goto pass;
@@ -117,13 +117,10 @@ int client_egress(struct __sk_buff *skb)
 	}
 
 handle_srh:
-	if (client_get_sid(skb, ipv6, &segment_list) < 0)
+	if (client_get_sid(skb, ipv6, &sidlist_data) < 0)
 		goto pass;
 
-	// TODO make it somehow dynamic
-	__u8 num_sids = 3;
-
-	if (add_srh(skb, data, data_end, segment_list, num_sids) < 0)
+	if (add_srh(skb, data, data_end, sidlist_data) < 0)
 		goto drop;
 
 	bpf_printk("[client-egress] srv6 packet send\n");

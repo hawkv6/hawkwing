@@ -14,19 +14,16 @@ struct client_inner_map {
 	__uint(type, BPF_MAP_TYPE_LRU_HASH);
 	__uint(max_entries, MAX_MAP_ENTRIES);
 	__type(key, __u16); // dstport
-	__type(value, struct in6_addr[MAX_SEGMENTLIST_ENTRIES]);
-	// __type(value, struct sid_lookup_value); // TODO check if this works
+	__type(value, struct sidlist_data);
 } client_inner_map SEC(".maps");
 
 struct client_outer_map {
 	__uint(type, BPF_MAP_TYPE_HASH_OF_MAPS);
 	__uint(max_entries, MAX_MAP_ENTRIES);
-	__type(key, __u32); // domain_name id
 	__uint(pinning, LIBBPF_PIN_BY_NAME);
+	__type(key, __u32); // domain_name id
 	__array(values, struct client_inner_map);
-} client_outer_map SEC(".maps") = {
-	.values = {[0] = &client_inner_map},
-};
+} client_outer_map SEC(".maps");
 
 struct client_reverse_map {
 	__uint(type, BPF_MAP_TYPE_LRU_HASH);

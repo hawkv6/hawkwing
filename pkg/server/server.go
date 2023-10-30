@@ -31,7 +31,7 @@ func NewServer(interfaceName string) (*Server, error) {
 	}
 
 	xdpLinker := linker.NewXdpLinker(iface, serverObjs.ServerIngress)
-	tcLinker := linker.NewTcLinker(iface, serverObjs.ServerEgress, "ingress")
+	tcLinker := linker.NewTcLinker(iface, serverObjs.ServerEgress, "egress")
 
 	err = bpf.Mount()
 	if err != nil {
