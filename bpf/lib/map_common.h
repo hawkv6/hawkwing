@@ -13,7 +13,7 @@
 struct sidlist_data {
 	__u32 sidlist_size;
 	struct in6_addr sidlist[MAX_SEGMENTLIST_ENTRIES];
-} __attribute__((packed));
+};
 
 struct percpu_sidlist_map {
 	__uint(type, BPF_MAP_TYPE_PERCPU_ARRAY);

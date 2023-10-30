@@ -36,6 +36,11 @@ func NewClient(interfaceName string) (*Client, error) {
 		return nil, fmt.Errorf("could not load client BPF objects: %s", err)
 	}
 
+	clientSpecs, err := client.ReadClientBpfSpecs()
+	if err != nil {
+		return nil, fmt.Errorf("could not load client BPF specs: %s", err)
+	}
+
 	xdpLinker := linker.NewXdpLinker(iface, clientObjs.ClientIngress)
 	tcLinker := linker.NewTcLinker(iface, clientObjs.ClientEgress, "egress")
 
@@ -44,7 +49,7 @@ func NewClient(interfaceName string) (*Client, error) {
 		log.Fatalf("could not mount BPF filesystem: %s", err)
 	}
 
-	clientMap := maps.NewClientMap()
+	clientMap := maps.NewClientMap(clientSpecs)
 	err = clientMap.CreateClientDataMaps()
 	if err != nil {
 		log.Fatalf("could not create client data maps: %s", err)

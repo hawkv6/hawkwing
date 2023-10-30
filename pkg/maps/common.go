@@ -1,8 +1,6 @@
 package maps
 
 import (
-	"bytes"
-	"encoding/binary"
 	"fmt"
 	"net"
 	"strings"
@@ -17,50 +15,10 @@ var (
 	}
 )
 
-// TODO - check of remove
 type SidListData struct {
 	SidlistSize uint32
 	Sidlist     [10]struct{ In6U struct{ U6Addr8 [16]uint8 } }
 }
-
-func (s *SidListData) Marshal() ([]byte, error) {
-	var buf bytes.Buffer
-
-	// Writing SidlistSize
-	if err := binary.Write(&buf, binary.LittleEndian, s.SidlistSize); err != nil {
-		return nil, err
-	}
-
-	// Writing Sidlist
-	for _, in6Addr := range s.Sidlist {
-		if err := binary.Write(&buf, binary.LittleEndian, in6Addr.In6U.U6Addr8); err != nil {
-			return nil, err
-		}
-	}
-
-	return buf.Bytes(), nil
-}
-
-// TODO - check of remove
-// func (s *SidListData) MarshalBinary() ([]byte, error) {
-// 	const ipv6Size = 16
-// 	const maxEntries = 10
-// 	size := maxEntries*ipv6Size + 4 // 4 bytes for sidListSize
-// 	buf := make([]byte, size)
-
-// 	offset := 0
-
-// 	for _, sid := range s.Sidlist {
-// 		for _, b := range sid.In6U.U6Addr8 {
-// 			buf[offset] = b
-// 			offset++
-// 		}
-// 	}
-
-// 	binary.LittleEndian.PutUint32(buf[offset:], s.SidlistSize)
-
-// 	return buf, nil
-// }
 
 // FormatDNSName takes a domain name in string format and returns a byte array
 // containing the domain name in DNS format. The returned byte array is intended
@@ -115,20 +73,6 @@ func FormatDNSName(domain string) ([256]byte, error) {
 //
 // Returns:
 //   - An array of 10 structs, each containing a 128-bit IPv6 address in byte format.
-// func SidToInet6Sid(sidList []string) [10]struct{ In6U struct{ U6Addr8 [16]uint8 } } {
-// 	var result [10]struct{ In6U struct{ U6Addr8 [16]uint8 } }
-// 	// Leave [0] empty, start from 1
-// 	for i, sid := range sidList {
-// 		if i >= 9 {
-// 			break // Max 9 addresses plus the empty one
-// 		}
-// 		ipv6 := net.ParseIP(sid)
-// 		// Reverse the order of the input list while inserting into the result
-// 		copy(result[len(sidList)-i].In6U.U6Addr8[:], ipv6.To16())
-// 	}
-// 	return result
-// }
-
 func SidToInet6Sid(sidList []string) [10]struct{ In6U struct{ U6Addr8 [16]uint8 } } {
 	var result [10]struct{ In6U struct{ U6Addr8 [16]uint8 } }
 	// Leave [0] empty, start from 1
@@ -143,25 +87,19 @@ func SidToInet6Sid(sidList []string) [10]struct{ In6U struct{ U6Addr8 [16]uint8 
 	return result
 }
 
-// TODO - check of remove
-// func GenerateSidLookupValue(sidList []string) *SidListData {
-// 	// var result SidLookupValue
-// 	result := SidListData{
-// 		SidlistSize: uint16(len(sidList)),
-// 		Sidlist:     SidToInet6Sid(sidList),
-// 	}
-// 	// result.SidlistSize = uint32(len(sidList))
-// 	// result.Sidlist = SidToInet6Sid(sidList)
-// 	return &result
-// }
-
-func GenerateSidLookupValueTest(sidList []string) SidListData {
-	// var result SidLookupValue
+// GenerateSidLookupValue takes a slice of IPv6 Segment IDs (SIDs) in string format and returns
+// a SidListData struct containing the IPv6 SIDs in reversed order. The returned struct is intended
+// for use as a value in an eBPF map.
+//
+// Parameters:
+//   - sidList: A slice of IPv6 SIDs in string format.
+//
+// Returns:
+//   - A SidListData struct containing the IPv6 SIDs in reversed order.
+func GenerateSidLookupValue(sidList []string) SidListData {
 	result := SidListData{
-		SidlistSize: uint32(len(sidList)),
+		SidlistSize: uint32(len(sidList) + 1), // +1 for the empty one
 		Sidlist:     SidToInet6Sid(sidList),
 	}
-	// result.SidlistSize = uint32(len(sidList))
-	// result.Sidlist = SidToInet6Sid(sidList)
 	return result
 }
