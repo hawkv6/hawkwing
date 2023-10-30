@@ -132,15 +132,13 @@ static __always_inline int remove_srh(struct xdp_md *ctx, void *data,
 // 	// use percpu map to store sidlist temporary
 // 	struct in6_addr *percpu_sidlist;
 // 	__u32 percpu_sidlist_key = 0;
-// 	percpu_sidlist = bpf_map_lookup_elem(&percpu_sidlist_map, &percpu_sidlist_key);
-// 	if (!percpu_sidlist)
-// 		return -1;
-// 	memset(percpu_sidlist, 0, sizeof(struct in6_addr) * MAX_SEGMENTLIST_ENTRIES);
+// 	percpu_sidlist = bpf_map_lookup_elem(&percpu_sidlist_map,
+// &percpu_sidlist_key); 	if (!percpu_sidlist) 		return -1; 	memset(percpu_sidlist,
+// 0, sizeof(struct in6_addr) * MAX_SEGMENTLIST_ENTRIES);
 
-// 	// memcpy(percpu_sidlist, sids, sizeof(struct in6_addr) * MAX_SEGMENTLIST_ENTRIES);
-// 	for (int i = 0; i < sidlist_size; i++) {
-// 		if (!(i < sidlist_size)) {
-// 			break;
+// 	// memcpy(percpu_sidlist, sids, sizeof(struct in6_addr) *
+// MAX_SEGMENTLIST_ENTRIES); 	for (int i = 0; i < sidlist_size; i++) { 		if (!(i <
+// sidlist_size)) { 			break;
 // 		}
 // 		memcpy(&percpu_sidlist[i], &sids[i], sizeof(struct in6_addr));
 // 	}
@@ -152,7 +150,8 @@ static __always_inline int remove_srh(struct xdp_md *ctx, void *data,
 // 				  sizeof(struct in6_addr) * sidlist_size);
 // 	ipv6->nexthdr = SRV6_NEXT_HDR;
 // 	// memcpy(&ipv6->daddr, &sids[sidlist_size - 1], sizeof(struct in6_addr));
-// 	memcpy(&ipv6->daddr, &percpu_sidlist[sidlist_size - 1], sizeof(struct in6_addr));
+// 	memcpy(&ipv6->daddr, &percpu_sidlist[sidlist_size - 1], sizeof(struct
+// in6_addr));
 
 // 	if (bpf_skb_adjust_room(
 // 			skb, sizeof(struct srh) + sizeof(struct in6_addr) * sidlist_size,
@@ -178,14 +177,17 @@ static __always_inline int remove_srh(struct xdp_md *ctx, void *data,
 // }
 
 static __always_inline int add_srh(struct __sk_buff *skb, void *data,
-								   void *data_end, struct sidlist_data *sidlist_data)
+								   void *data_end,
+								   struct sidlist_data *sidlist_data)
 {
 	struct ipv6hdr *ipv6 = data + sizeof(struct ethhdr);
 	if (data + sizeof(struct ethhdr) + sizeof(struct ipv6hdr) > data_end)
 		return -1;
 
 	int hdr_ext_len =
-		(sizeof(struct srh) + sizeof(struct in6_addr) * sidlist_data->sidlist_size - 8) / 8;
+		(sizeof(struct srh) +
+		 sizeof(struct in6_addr) * sidlist_data->sidlist_size - 8) /
+		8;
 
 	struct srh srh = {
 		.next_hdr = ipv6->nexthdr,
@@ -198,13 +200,16 @@ static __always_inline int add_srh(struct __sk_buff *skb, void *data,
 	// use percpu map to store sidlist temporary
 	struct in6_addr *percpu_sidlist;
 	__u32 percpu_sidlist_key = 0;
-	percpu_sidlist = bpf_map_lookup_elem(&percpu_sidlist_map, &percpu_sidlist_key);
+	percpu_sidlist =
+		bpf_map_lookup_elem(&percpu_sidlist_map, &percpu_sidlist_key);
 	if (!percpu_sidlist)
 		return -1;
 
-	memset(percpu_sidlist, 0, sizeof(struct in6_addr) * MAX_SEGMENTLIST_ENTRIES);
+	memset(percpu_sidlist, 0,
+		   sizeof(struct in6_addr) * MAX_SEGMENTLIST_ENTRIES);
 
-	memcpy(percpu_sidlist, sidlist_data->sidlist, sizeof(struct in6_addr) * MAX_SEGMENTLIST_ENTRIES);
+	memcpy(percpu_sidlist, sidlist_data->sidlist,
+		   sizeof(struct in6_addr) * MAX_SEGMENTLIST_ENTRIES);
 
 	memcpy(&percpu_sidlist[0], &ipv6->daddr, sizeof(struct in6_addr));
 	ipv6->payload_len =
@@ -214,14 +219,16 @@ static __always_inline int add_srh(struct __sk_buff *skb, void *data,
 
 	__u16 last_index = sidlist_data->sidlist_size - 1;
 	if (last_index < MAX_SEGMENTLIST_ENTRIES) {
-		memcpy(&ipv6->daddr, &percpu_sidlist[last_index], sizeof(struct in6_addr));
+		memcpy(&ipv6->daddr, &percpu_sidlist[last_index],
+			   sizeof(struct in6_addr));
 	} else {
 		return -1;
 	}
 
-	if (bpf_skb_adjust_room(
-			skb, sizeof(struct srh) + sizeof(struct in6_addr) * sidlist_data->sidlist_size,
-			BPF_ADJ_ROOM_NET, 0) < 0)
+	if (bpf_skb_adjust_room(skb,
+							sizeof(struct srh) + sizeof(struct in6_addr) *
+													 sidlist_data->sidlist_size,
+							BPF_ADJ_ROOM_NET, 0) < 0)
 		return -1;
 
 	if (bpf_skb_store_bytes(skb, sizeof(struct ethhdr) + sizeof(struct ipv6hdr),
@@ -229,14 +236,16 @@ static __always_inline int add_srh(struct __sk_buff *skb, void *data,
 		return -1;
 
 	__u16 i;
-	__u32 offset = sizeof(struct ethhdr) + sizeof(struct ipv6hdr) + sizeof(struct srh);
+	__u32 offset =
+		sizeof(struct ethhdr) + sizeof(struct ipv6hdr) + sizeof(struct srh);
 
 	for (i = 0; i < sidlist_data->sidlist_size; i++) {
 		// check is needed for verifier
 		if (i >= MAX_SEGMENTLIST_ENTRIES) {
 			break;
 		}
-		if (bpf_skb_store_bytes(skb, offset, &percpu_sidlist[i], sizeof(struct in6_addr), 0) < 0) {
+		if (bpf_skb_store_bytes(skb, offset, &percpu_sidlist[i],
+								sizeof(struct in6_addr), 0) < 0) {
 			return -1;
 		}
 		offset += sizeof(struct in6_addr);

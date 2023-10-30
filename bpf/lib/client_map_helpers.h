@@ -40,9 +40,9 @@ static __always_inline int client_get_sid(struct __sk_buff *skb,
 	return 0;
 }
 
-static __always_inline int client_get_sid_test(struct __sk_buff *skb,
-										  struct ipv6hdr *ipv6,
-										  struct sidlist_data **sidlist_data)
+static __always_inline int
+client_get_sid_test(struct __sk_buff *skb, struct ipv6hdr *ipv6,
+					struct sidlist_data **sidlist_data)
 {
 	__u32 *domain_id = bpf_map_lookup_elem(&client_reverse_map, &ipv6->daddr);
 	if (!domain_id)

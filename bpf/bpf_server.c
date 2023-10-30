@@ -66,7 +66,7 @@ int server_egress(struct __sk_buff *skb)
 	struct ethhdr *eth = data;
 	struct ipv6hdr *ipv6 = (struct ipv6hdr *)(eth + 1);
 	struct sidlist_data *sidlist_data;
-	
+
 	if ((void *)(eth + 1) > data_end)
 		goto pass;
 	if (eth->h_proto != bpf_htons(ETH_P_IPV6))

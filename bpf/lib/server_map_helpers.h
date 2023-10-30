@@ -113,16 +113,15 @@ store_incoming_triple(struct xdp_md *ctx, struct ipv6hdr *ipv6, struct srh *srh)
 	return 0;
 }
 
-static __always_inline int server_get_sid(struct __sk_buff *skb, struct ipv6hdr *ipv6, struct sidlist_data **sidlist_data)
+static __always_inline int server_get_sid(struct __sk_buff *skb,
+										  struct ipv6hdr *ipv6,
+										  struct sidlist_data **sidlist_data)
 {
 	__u16 dstport = 0;
 	if (parse_ipproto_dstport(skb, ipv6, &dstport) < 0)
 		return -1;
 
-	struct server_lookup_key key = {
-		.addr = ipv6->daddr,
-		.port = dstport
-	};
+	struct server_lookup_key key = {.addr = ipv6->daddr, .port = dstport};
 
 	*sidlist_data = bpf_map_lookup_elem(&server_lookup_map, &key);
 	if (!*sidlist_data) {

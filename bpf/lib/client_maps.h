@@ -23,7 +23,7 @@ struct client_outer_map {
 	__uint(pinning, LIBBPF_PIN_BY_NAME);
 	__type(key, __u32); // domain_name id
 	__array(values, struct client_inner_map);
-} client_outer_map SEC(".maps"); 
+} client_outer_map SEC(".maps");
 
 struct client_reverse_map {
 	__uint(type, BPF_MAP_TYPE_LRU_HASH);
