@@ -97,6 +97,7 @@ func SidToInet6Sid(sidList []string) [10]struct{ In6U struct{ U6Addr8 [16]uint8 
 // Returns:
 //   - A SidListData struct containing the IPv6 SIDs in reversed order.
 func GenerateSidLookupValue(sidList []string) SidListData {
+	// TODO: Check what to do if the list is empty (sidlistsize = 0)
 	result := SidListData{
 		SidlistSize: uint32(len(sidList) + 1), // +1 for the empty one
 		Sidlist:     SidToInet6Sid(sidList),

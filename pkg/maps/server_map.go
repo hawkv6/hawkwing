@@ -3,12 +3,11 @@ package maps
 import (
 	"fmt"
 
-	"github.com/cilium/ebpf"
 	"github.com/hawkv6/hawkwing/pkg/bpf/server"
 )
 
 type ServerMap struct {
-	collSpec *ebpf.CollectionSpec
+	Lookup *ServerLookupMap
 }
 
 func NewServerMap() (*ServerMap, error) {
@@ -16,15 +15,15 @@ func NewServerMap() (*ServerMap, error) {
 	if err != nil {
 		return nil, fmt.Errorf("could not load server BPF specs: %s", err)
 	}
+
+	lookupMapSpec := collSpec.Maps["server_lookup_map"]
 	return &ServerMap{
-		collSpec: collSpec,
+		Lookup: NewServerLookupMap(lookupMapSpec),
 	}, nil
 }
 
-func (sm *ServerMap) CreateServerLookupMap() error {
-	lookupMap := sm.collSpec.Maps["server_lookup_map"]
-	lookupBuilder := NewEbpfMapBuilder(lookupMap, pinnedMapOptions)
-	if err := lookupBuilder.Build(); err != nil {
+func (sm *ServerMap) Create() error {
+	if err := sm.Lookup.Build(); err != nil {
 		return fmt.Errorf("could not build server lookup map: %s", err)
 	}
 	return nil
