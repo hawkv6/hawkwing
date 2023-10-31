@@ -36,23 +36,21 @@ func NewClient(interfaceName string) (*Client, error) {
 		return nil, fmt.Errorf("could not load client BPF objects: %s", err)
 	}
 
-	clientSpecs, err := client.ReadClientBpfSpecs()
-	if err != nil {
-		return nil, fmt.Errorf("could not load client BPF specs: %s", err)
-	}
-
 	xdpLinker := linker.NewXdpLinker(iface, clientObjs.ClientIngress)
 	tcLinker := linker.NewTcLinker(iface, clientObjs.ClientEgress, "egress")
 
 	err = bpf.Mount()
 	if err != nil {
-		log.Fatalf("could not mount BPF filesystem: %s", err)
+		return nil, fmt.Errorf("could not mount BPF filesystem: %s", err)
 	}
 
-	clientMap := maps.NewClientMap(clientSpecs)
-	err = clientMap.CreateClientDataMaps()
+	clientMap, err := maps.NewClientMap()
 	if err != nil {
-		log.Fatalf("could not create client data maps: %s", err)
+		return nil, fmt.Errorf("could not create client map: %s", err)
+	}
+	err = clientMap.Create()
+	if err != nil {
+		return nil, fmt.Errorf("could not create client lookup map: %s", err)
 	}
 
 	return &Client{
@@ -80,8 +78,8 @@ func (c *Client) Start() {
 		}
 	}()
 
-	log.Printf("Client started on interface %q", c.iface.Attrs().Name)
-	log.Printf("Press Ctrl-C to exit and remove the program")
+	fmt.Printf("Client started on interface %q\n", c.iface.Attrs().Name)
+	fmt.Println("Press Ctrl-C to exit and remove the program")
 }
 
 func (c *Client) Stop() {

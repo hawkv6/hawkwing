@@ -1,32 +1,30 @@
 package maps
 
 import (
-	"github.com/cilium/ebpf"
+	"fmt"
+
+	"github.com/hawkv6/hawkwing/pkg/bpf/server"
 )
 
 type ServerMap struct {
-	lookupMap *ebpf.MapSpec
+	Lookup *ServerLookupMap
 }
 
-func (sm *ServerMap) CreateServerDataMaps() error {
-	lookupBuilder := NewEbpfMapBuilder(sm.lookupMap, pinnedMapOptions)
-	if err := lookupBuilder.Build(); err != nil {
-		return err
+func NewServerMap() (*ServerMap, error) {
+	collSpec, err := server.ReadServerBpfSpecs()
+	if err != nil {
+		return nil, fmt.Errorf("could not load server BPF specs: %s", err)
+	}
+
+	lookupMapSpec := collSpec.Maps["server_lookup_map"]
+	return &ServerMap{
+		Lookup: NewServerLookupMap(lookupMapSpec),
+	}, nil
+}
+
+func (sm *ServerMap) Create() error {
+	if err := sm.Lookup.Build(); err != nil {
+		return fmt.Errorf("could not build server lookup map: %s", err)
 	}
 	return nil
-}
-
-func NewServerMap() *ServerMap {
-	lookupMapSpec := &ebpf.MapSpec{
-		Name:       "server_lookup_map",
-		Type:       ebpf.LRUHash,
-		KeySize:    18,  // 16 bytes for IPv6 address + 2 bytes for port
-		ValueSize:  164, // 10 * 16 bytes for IPv6 address + 4 for sidlist_size
-		MaxEntries: 1024,
-		Pinning:    ebpf.PinByName,
-		Contents:   make([]ebpf.MapKV, 1),
-	}
-	return &ServerMap{
-		lookupMap: lookupMapSpec,
-	}
 }

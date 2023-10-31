@@ -5,36 +5,56 @@ import (
 
 	"github.com/cilium/ebpf"
 	"github.com/hawkv6/hawkwing/internal/config"
+	"github.com/hawkv6/hawkwing/pkg/bpf/client"
 )
 
 type ClientMap struct {
-	outerMapSpec *ebpf.MapSpec
+	Outer  *OuterMap
+	Inners map[string]*InnerMap
+	Lookup *LookupMap
 }
 
-func (cm *ClientMap) CreateClientDataMaps() error {
-	lookupMapSpec := cm.clientLookupMapSpec()
-	innerMapSpecs := cm.clientInnerMapSpecs()
-
-	err := BuildClientDataMap(lookupMapSpec, cm.outerMapSpec, innerMapSpecs)
+func NewClientMap() (*ClientMap, error) {
+	clientElfSpec, err := client.ReadClientBpfSpecs()
 	if err != nil {
-		return fmt.Errorf("could not build client data maps: %s", err)
+		return nil, fmt.Errorf("could not load client BPF specs: %s", err)
 	}
-
-	return nil
+	outerMapSpec := clientElfSpec.Maps["client_outer_map"]
+	lookupMapSpec := clientElfSpec.Maps["client_lookup_map"]
+	return &ClientMap{
+		Outer:  NewOuterMap(outerMapSpec),
+		Inners: make(map[string]*InnerMap),
+		Lookup: NewLookupMap(lookupMapSpec),
+	}, nil
 }
 
-func NewClientMap(clientElfSpec *ebpf.CollectionSpec) *ClientMap {
-	outerMapSpec := clientElfSpec.Maps["client_outer_map"]
-	return &ClientMap{
-		outerMapSpec: outerMapSpec,
+func (cm *ClientMap) Create() error {
+	innerSpecs := cm.clientInnerMapSpecs()
+	i := 0
+	for key, spec := range innerSpecs {
+		inner := NewInnerMap(spec)
+		inner.ID = i
+		cm.Inners[key] = inner
+		i++
 	}
+	return cm.BuildClientDataMap()
+}
+
+func (cm *ClientMap) BuildClientDataMap() error {
+	if err := cm.Lookup.BuildWith(cm.Inners); err != nil {
+		return fmt.Errorf("could not build lookup map: %s", err)
+	}
+	if err := cm.Outer.BuildWith(cm.Inners); err != nil {
+		return fmt.Errorf("could not build outer map: %s", err)
+	}
+	return nil
 }
 
 func (cm *ClientMap) clientInnerMapSpecs() map[string]*ebpf.MapSpec {
 	innerMapSpecs := make(map[string]*ebpf.MapSpec)
 	for key, services := range config.Params.Services {
-		innerMapSpec := cm.outerMapSpec.InnerMap.Copy()
-		innerMapSpec.Name = fmt.Sprintf("%s_%s", cm.outerMapSpec.InnerMap.Name, key)
+		innerMapSpec := cm.Outer.spec.InnerMap.Copy()
+		innerMapSpec.Name = fmt.Sprintf("%s_%s", "client_inner", key)
 		innerMapSpec.Contents = make([]ebpf.MapKV, len(services))
 		for i, service := range services {
 			value := GenerateSidLookupValue(service.Sid)
@@ -46,16 +66,4 @@ func (cm *ClientMap) clientInnerMapSpecs() map[string]*ebpf.MapSpec {
 		innerMapSpecs[key] = innerMapSpec
 	}
 	return innerMapSpecs
-}
-
-func (cm *ClientMap) clientLookupMapSpec() *ebpf.MapSpec {
-	return &ebpf.MapSpec{
-		Name:       "client_lookup_map",
-		Type:       ebpf.LRUHash,
-		KeySize:    256,
-		ValueSize:  4,
-		MaxEntries: 1024,
-		Pinning:    ebpf.PinByName,
-		Contents:   make([]ebpf.MapKV, len(config.Params.Services)),
-	}
 }

@@ -26,7 +26,7 @@ func ReadClientBpfObjects() (*clientObjects, error) {
 func ReadClientBpfSpecs() (*ebpf.CollectionSpec, error) {
 	specs, err := loadClient()
 	if err != nil {
-		return nil, fmt.Errorf("could not load client BPF objects: %s", err)
+		return nil, fmt.Errorf("could not load client BPF collection: %s", err)
 	}
 	return specs, nil
 }

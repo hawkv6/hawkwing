@@ -2,14 +2,20 @@ package server
 
 import (
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/hawkv6/hawkwing/pkg/bpf"
 	"github.com/hawkv6/hawkwing/pkg/bpf/server"
 	"github.com/hawkv6/hawkwing/pkg/linker"
+	"github.com/hawkv6/hawkwing/pkg/logging"
 	"github.com/hawkv6/hawkwing/pkg/maps"
 	"github.com/vishvananda/netlink"
+)
+
+var log = logging.DefaultLogger.WithField("subsystem", Subsystem)
+
+const (
+	Subsystem = "go-server"
 )
 
 type Server struct {
@@ -35,13 +41,17 @@ func NewServer(interfaceName string) (*Server, error) {
 
 	err = bpf.Mount()
 	if err != nil {
-		log.Fatalf("could not mount BPF filesystem: %s", err)
+		return nil, fmt.Errorf("could not mount BPF filesystem: %s", err)
 	}
 
-	serverMap := maps.NewServerMap()
-	err = serverMap.CreateServerDataMaps()
+	serverMap, err := maps.NewServerMap()
 	if err != nil {
-		log.Fatalf("could not create server data maps: %s", err)
+		return nil, fmt.Errorf("could not create server map: %s", err)
+	}
+
+	err = serverMap.Create()
+	if err != nil {
+		return nil, fmt.Errorf("could not create server map: %s", err)
 	}
 
 	return &Server{
@@ -70,8 +80,8 @@ func (s *Server) Start() {
 		}
 	}()
 
-	log.Printf("Server started on interface %s", s.iface.Attrs().Name)
-	log.Printf("Press Ctrl+C to exit and remove the program")
+	fmt.Printf("Server started on interface %s\n", s.iface.Attrs().Name)
+	fmt.Println("Press Ctrl+C to exit and remove the program")
 }
 
 func (s *Server) Stop() {
