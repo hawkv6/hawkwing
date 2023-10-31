@@ -35,13 +35,16 @@ func NewServer(interfaceName string) (*Server, error) {
 
 	err = bpf.Mount()
 	if err != nil {
-		log.Fatalf("could not mount BPF filesystem: %s", err)
+		return nil, fmt.Errorf("could not mount BPF filesystem: %s", err)
 	}
 
-	serverMap := maps.NewServerMap()
-	err = serverMap.CreateServerDataMaps()
+	serverMap, err := maps.NewServerMap()
 	if err != nil {
-		log.Fatalf("could not create server data maps: %s", err)
+		return nil, fmt.Errorf("could not create server map: %s", err)
+	}
+	err = serverMap.CreateServerLookupMap()
+	if err != nil {
+		return nil, fmt.Errorf("could not create server lookup map: %s", err)
 	}
 
 	return &Server{

@@ -22,3 +22,11 @@ func ReadServerBpfObjects() (*serverObjects, error) {
 	}
 	return obj, nil
 }
+
+func ReadServerBpfSpecs() (*ebpf.CollectionSpec, error) {
+	specs, err := loadServer()
+	if err != nil {
+		return nil, fmt.Errorf("could not load server BPF collection: %s", err)
+	}
+	return specs, nil
+}
