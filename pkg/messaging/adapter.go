@@ -27,7 +27,9 @@ func (a *MessagingAdapter) HandleIntent() {
 		for {
 			intentResponse := <-a.messagingChannels.ChMessageIntentResponse
 			a.adapterChannels.ChAdapterIntentResponse <- &IntentResponse{
-				SidList: intentResponse.Ipv6Addresses,
+				DomainName: intentResponse.DomainName,
+				IntentName: intentEnumToString(intentResponse.Intent),
+				SidList:    intentResponse.Ipv6Addresses,
 			}
 		}
 	}()

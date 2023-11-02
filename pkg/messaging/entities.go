@@ -8,13 +8,28 @@ type IntentRequest struct {
 }
 
 type IntentResponse struct {
-	SidList []string
+	DomainName string
+	IntentName string
+	SidList    []string
 }
 
 func (i *IntentRequest) Marshal() *api.Intent {
 	return &api.Intent{
 		DomainName: i.DomainName,
 		Intent:     intentStringToEnum(i.IntentName),
+	}
+}
+
+func intentEnumToString(intent api.IntentType) string {
+	switch intent {
+	case api.IntentType_INTENT_TYPE_HIGH_BANDWIDTH:
+		return "high-bandwidth"
+	case api.IntentType_INTENT_TYPE_LOW_BANDWIDTH:
+		return "low-bandwidth"
+	case api.IntentType_INTENT_TYPE_LOW_LATENCY:
+		return "low-latency"
+	default:
+		return "unspecified"
 	}
 }
 

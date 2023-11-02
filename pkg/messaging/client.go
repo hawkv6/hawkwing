@@ -2,13 +2,17 @@ package messaging
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/hawkv6/hawkwing/pkg/api"
+	"github.com/hawkv6/hawkwing/pkg/logging"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
+
+var log = logging.DefaultLogger.WithField("subsystem", Subsystem)
+
+const Subsystem = "go-messaging"
 
 type MessagingClient struct {
 	api.IntentServiceClient
@@ -16,8 +20,10 @@ type MessagingClient struct {
 	conn              *grpc.ClientConn
 }
 
-func NewMessagingClient() *MessagingClient {
-	return &MessagingClient{}
+func NewMessagingClient(messagingChannels *MessagingChannels) *MessagingClient {
+	return &MessagingClient{
+		messagingChannels: messagingChannels,
+	}
 }
 
 func (c *MessagingClient) Start() {
@@ -27,7 +33,8 @@ func (c *MessagingClient) Start() {
 }
 
 func (c *MessagingClient) connect() {
-	connectionAddress := "localhost:50051"
+	// connectionAddress := config.Params.HawkEye.Hostname + ":" + strconv.Itoa(config.Params.HawkEye.Port)
+	connectionAddress := "[fcbb:cc00:5::f]:5001"
 	for {
 		conn, err := grpc.Dial(connectionAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
@@ -39,6 +46,7 @@ func (c *MessagingClient) connect() {
 		c.IntentServiceClient = api.NewIntentServiceClient(conn)
 		break
 	}
+	log.Printf("connected to %s", connectionAddress)
 }
 
 func (c *MessagingClient) handleIntentRequest() {
@@ -52,6 +60,7 @@ func (c *MessagingClient) handleIntentRequest() {
 				continue
 			}
 			c.messagingChannels.ChMessageIntentResponse <- intentResponse
+			log.Printf("received intent response for [domain | intent]: [%s | %s]", intentResponse.DomainName, intentEnumToString(intentResponse.Intent))
 		}
 	}()
 }

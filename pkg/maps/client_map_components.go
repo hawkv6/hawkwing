@@ -2,6 +2,7 @@ package maps
 
 import (
 	"fmt"
+	"path"
 
 	"github.com/cilium/ebpf"
 )
@@ -9,11 +10,13 @@ import (
 type InnerMap struct {
 	ID   int
 	spec *ebpf.MapSpec
-	m    *ebpf.Map
+	M    *ebpf.Map
 }
 
 func NewInnerMap(spec *ebpf.MapSpec) *InnerMap {
-	return &InnerMap{spec: spec}
+	return &InnerMap{
+		spec: spec,
+	}
 }
 
 func (im *InnerMap) Build() error {
@@ -21,17 +24,18 @@ func (im *InnerMap) Build() error {
 	if err != nil {
 		return fmt.Errorf("could not create inner map: %s", err)
 	}
-	im.m = mapInstance
+	im.M = mapInstance
 	return nil
 }
 
 type OuterMap struct {
 	spec *ebpf.MapSpec
 	m    *ebpf.Map
+	Path string
 }
 
 func NewOuterMap(spec *ebpf.MapSpec) *OuterMap {
-	return &OuterMap{spec: spec}
+	return &OuterMap{spec: spec, Path: path.Base(spec.Name)}
 }
 
 func (om *OuterMap) BuildWith(inners map[string]*InnerMap) error {
@@ -58,10 +62,11 @@ func (om *OuterMap) BuildWith(inners map[string]*InnerMap) error {
 type LookupMap struct {
 	spec *ebpf.MapSpec
 	m    *ebpf.Map
+	Path string
 }
 
 func NewLookupMap(spec *ebpf.MapSpec) *LookupMap {
-	return &LookupMap{spec: spec}
+	return &LookupMap{spec: spec, Path: path.Base(spec.Name)}
 }
 
 func (lm *LookupMap) BuildWith(inners map[string]*InnerMap) error {
