@@ -16,11 +16,17 @@ RESET  := $(shell tput -Txterm sgr0)
 all: go-gen build ## Build the entire project
 
 install-deps: ## Install development dependencies
+	sudo apt install -y protobuf-compiler
 	go install honnef.co/go/tools/cmd/staticcheck@latest
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.28
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2
 	sudo apt install clang clang-format llvm gcc libbpf-dev libelf-dev make linux-headers-$(uname -r)
 	sudo ln -s /usr/include/x86_64-linux-gnu/asm /usr/include/asm
 # https://github.com/xdp-project/xdp-tools
 # https://github.com/libbpf/bpftool/blob/master/README.md
+
+update-submodules: ## Update git submodules
+	git submodule update --remote --merge
 
 build: ## Compile the Go binary
 	mkdir -p out/bin
@@ -42,8 +48,8 @@ test-coverage: ## Run go tests with coverage
 	go clean -testcache
 	go test ./... -coverprofile=coverage.out
 
-grpc-gen: ## Generate gRPC code
-	protoc -I ./api/proto --go_out=plugins=grpc:./api/proto ./api/proto/*.proto
+generate-proto: ## Generate gRPC code
+	protoc --go_out=. --go_opt=Mproto/intent.proto=pkg/api --go-grpc_out=. --go-grpc_opt=Mproto/intent.proto=pkg/api proto/*.proto
 
 setup-network: ## Setup the development network environment
 	cd tools && sudo ./network.sh -s

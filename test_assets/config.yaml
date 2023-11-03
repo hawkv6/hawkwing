@@ -1,7 +1,7 @@
 ---
 hawkeye:
-  hostname: hawkeye.hawk.net
-  port: 1234
+  hostname: fcbb:cc00:5::f # hawkeye.hawk.net
+  port: 5001
 services:
   wb.hawk.net:
     - intent: high-bandwidth

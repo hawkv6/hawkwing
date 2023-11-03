@@ -12,6 +12,25 @@ func NewMessagingAdapter(messagingChannels *MessagingChannels, adapterChannels *
 	}
 }
 
-func (a *MessagingAdapter) Start() error {
-	return nil
+func (a *MessagingAdapter) Start() {
+	a.HandleIntent()
+}
+
+func (a *MessagingAdapter) HandleIntent() {
+	go func() {
+		for {
+			intentRequest := <-a.adapterChannels.ChAdapterIntentRequest
+			a.messagingChannels.ChMessageIntentRequest <- intentRequest.Marshal()
+		}
+	}()
+	go func() {
+		for {
+			intentResponse := <-a.messagingChannels.ChMessageIntentResponse
+			a.adapterChannels.ChAdapterIntentResponse <- &IntentResponse{
+				DomainName: intentResponse.DomainName,
+				IntentName: intentEnumToString(intentResponse.Intent),
+				SidList:    intentResponse.Ipv6Addresses,
+			}
+		}
+	}()
 }

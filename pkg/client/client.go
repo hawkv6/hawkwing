@@ -9,6 +9,8 @@ import (
 	"github.com/hawkv6/hawkwing/pkg/linker"
 	"github.com/hawkv6/hawkwing/pkg/logging"
 	"github.com/hawkv6/hawkwing/pkg/maps"
+	"github.com/hawkv6/hawkwing/pkg/messaging"
+	"github.com/hawkv6/hawkwing/pkg/syncer"
 	"github.com/vishvananda/netlink"
 )
 
@@ -19,10 +21,15 @@ const (
 )
 
 type Client struct {
-	iface     netlink.Link
-	xdpLinker *linker.XdpLinker
-	tcLinker  *linker.TcLinker
-	wg        *sync.WaitGroup
+	iface             netlink.Link
+	xdpLinker         *linker.XdpLinker
+	tcLinker          *linker.TcLinker
+	wg                *sync.WaitGroup
+	adapterChannels   *messaging.AdapterChannels
+	messagingChannels *messaging.MessagingChannels
+	messenger         *messaging.MessagingClient
+	adapter           *messaging.MessagingAdapter
+	syncer            *syncer.Syncer
 }
 
 func NewClient(interfaceName string) (*Client, error) {
@@ -53,16 +60,35 @@ func NewClient(interfaceName string) (*Client, error) {
 		return nil, fmt.Errorf("could not create client lookup map: %s", err)
 	}
 
+	messagingChannels := messaging.NewMessagingChannels()
+	adapterChannels := messaging.NewAdapterChannels()
+	messenger := messaging.NewMessagingClient(messagingChannels)
+	adapter := messaging.NewMessagingAdapter(messagingChannels, adapterChannels)
+	syncer := syncer.NewSyncer(adapterChannels, clientMap)
+
 	return &Client{
-		iface:     iface,
-		xdpLinker: xdpLinker,
-		tcLinker:  tcLinker,
-		wg:        &sync.WaitGroup{},
+		iface:             iface,
+		xdpLinker:         xdpLinker,
+		tcLinker:          tcLinker,
+		wg:                &sync.WaitGroup{},
+		adapterChannels:   adapterChannels,
+		messagingChannels: messagingChannels,
+		messenger:         messenger,
+		adapter:           adapter,
+		syncer:            syncer,
 	}, nil
 }
 
 func (c *Client) Start() {
-	c.wg.Add(2)
+	c.wg.Add(3)
+
+	go func() {
+		defer c.wg.Done()
+		c.messenger.Start()
+		c.adapter.Start()
+		c.syncer.Start()
+		c.syncer.FetchAll()
+	}()
 
 	go func() {
 		defer c.wg.Done()

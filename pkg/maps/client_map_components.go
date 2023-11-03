@@ -7,13 +7,16 @@ import (
 )
 
 type InnerMap struct {
-	ID   int
-	spec *ebpf.MapSpec
-	m    *ebpf.Map
+	Map
+	ID int
 }
 
 func NewInnerMap(spec *ebpf.MapSpec) *InnerMap {
-	return &InnerMap{spec: spec}
+	return &InnerMap{
+		Map: Map{
+			spec: spec,
+		},
+	}
 }
 
 func (im *InnerMap) Build() error {
@@ -26,12 +29,11 @@ func (im *InnerMap) Build() error {
 }
 
 type OuterMap struct {
-	spec *ebpf.MapSpec
-	m    *ebpf.Map
+	Map
 }
 
 func NewOuterMap(spec *ebpf.MapSpec) *OuterMap {
-	return &OuterMap{spec: spec}
+	return &OuterMap{Map: Map{spec: spec}}
 }
 
 func (om *OuterMap) BuildWith(inners map[string]*InnerMap) error {
@@ -47,21 +49,21 @@ func (om *OuterMap) BuildWith(inners map[string]*InnerMap) error {
 		})
 	}
 	om.spec.Contents = outerContents
-	mapInstance, err := ebpf.NewMapWithOptions(om.spec, pinnedMapOptions)
+	err := om.Map.OpenOrCreate()
 	if err != nil {
 		return fmt.Errorf("could not create outer map: %s", err)
 	}
-	om.m = mapInstance
 	return nil
 }
 
 type LookupMap struct {
-	spec *ebpf.MapSpec
-	m    *ebpf.Map
+	Map
 }
 
 func NewLookupMap(spec *ebpf.MapSpec) *LookupMap {
-	return &LookupMap{spec: spec}
+	return &LookupMap{
+		Map: Map{spec: spec},
+	}
 }
 
 func (lm *LookupMap) BuildWith(inners map[string]*InnerMap) error {
@@ -76,11 +78,11 @@ func (lm *LookupMap) BuildWith(inners map[string]*InnerMap) error {
 			Value: uint32(inner.ID),
 		})
 	}
-	lm.spec.Contents = lookupContents
-	mapInstance, err := ebpf.NewMapWithOptions(lm.spec, pinnedMapOptions)
+
+	lm.Map.spec.Contents = lookupContents
+	err := lm.Map.OpenOrCreate()
 	if err != nil {
 		return fmt.Errorf("could not create lookup map: %s", err)
 	}
-	lm.m = mapInstance
 	return nil
 }
