@@ -15,6 +15,10 @@ type Map struct {
 	path string
 }
 
+func NewMap(spec *ebpf.MapSpec) *Map {
+	return &Map{spec: spec}
+}
+
 // OpenOrCreate opens or creates the map.
 //
 // Returns:
