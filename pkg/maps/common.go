@@ -4,15 +4,6 @@ import (
 	"fmt"
 	"net"
 	"strings"
-
-	"github.com/cilium/ebpf"
-	"github.com/hawkv6/hawkwing/pkg/bpf"
-)
-
-var (
-	pinnedMapOptions = ebpf.MapOptions{
-		PinPath: bpf.BpffsRoot,
-	}
 )
 
 type SidListData struct {
