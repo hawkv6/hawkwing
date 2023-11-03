@@ -1,7 +1,10 @@
 package syncer
 
 import (
+	"fmt"
+
 	"github.com/hawkv6/hawkwing/internal/config"
+	"github.com/hawkv6/hawkwing/pkg/maps"
 	"github.com/hawkv6/hawkwing/pkg/messaging"
 )
 
@@ -15,44 +18,26 @@ import (
 // Returns:
 //   - An error if the sid list could not be stored.
 func (s *Syncer) storeSidList(intentResponse *messaging.IntentResponse) error {
-	// TODO: implement
+	ports := s.getPortsToQuery(intentResponse.DomainName, intentResponse.IntentName)
+	formattedDomainName, err := maps.FormatDNSName(intentResponse.DomainName)
+	if err != nil {
+		return fmt.Errorf("could not format domain name: %s", err)
+	}
 
-	// ports := s.getPortsToQuery(intentResponse.DomainName, intentResponse.IntentName)
-	// formattedDomainName, err := maps.FormatDNSName(intentResponse.DomainName)
-	// if err != nil {
-	// 	return fmt.Errorf("could not format domain name: %s", err)
-	// }
+	var lookupValue uint32
+	err = s.cm.Lookup.Map.Lookup(formattedDomainName, &lookupValue)
+	if err != nil {
+		return fmt.Errorf("could not find a value in the lookup map for %s: %s", intentResponse.DomainName, err)
+	}
 
-	// path := "/sys/fs/bpf/hawkwing/client_outer_map"
-	// om, err := ebpf.LoadPinnedMap(path, nil)
-	// if err != nil {
-	// 	return fmt.Errorf("could not load outer map: %s", err)
-	// }
-	// lm, err := ebpf.LoadPinnedMap(s.cm.Lookup.Path, nil)
-	// if err != nil {
-	// 	return fmt.Errorf("could not load lookup map: %s", err)
-	// }
+	sidListData := maps.GenerateSidLookupValue(intentResponse.SidList)
 
-	// innerMapId := uint32(0)
-	// err = lm.Lookup(formattedDomainName, &innerMapId)
-	// if err != nil {
-	// 	return fmt.Errorf("could not find inner map for domain %s", intentResponse.DomainName)
-	// }
-
-	// var innerMap *ebpf.Map
-	// err = om.Lookup(uint32(innerMapId), &innerMap)
-	// if err != nil {
-	// 	return fmt.Errorf("could not find inner map for domain %s", intentResponse.DomainName)
-	// }
-
-	// sidListData := maps.GenerateSidLookupValue(intentResponse.SidList)
-
-	// for _, port := range ports {
-	// 	err = innerMap.Put(uint32(port), sidListData)
-	// 	if err != nil {
-	// 		return fmt.Errorf("could not update inner map: %s", err)
-	// 	}
-	// }
+	for _, port := range ports {
+		err = s.cm.Outer.UpdateInner(lookupValue, uint16(port), sidListData)
+		if err != nil {
+			return fmt.Errorf("could not update inner map: %s", err)
+		}
+	}
 	return nil
 }
 

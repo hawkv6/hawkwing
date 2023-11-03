@@ -1,8 +1,6 @@
 package syncer
 
 import (
-	"fmt"
-
 	"github.com/hawkv6/hawkwing/internal/config"
 	"github.com/hawkv6/hawkwing/pkg/logging"
 	"github.com/hawkv6/hawkwing/pkg/maps"
@@ -58,7 +56,7 @@ func (s *Syncer) handleIntentMessages() {
 		for {
 			intentResponse := <-s.adapterChannels.ChAdapterIntentResponse
 			if err := s.storeSidList(intentResponse); err != nil {
-				fmt.Printf("could not store sid list: %s", err)
+				log.WithError(err).Error("could not store sid list")
 			}
 			log.Printf("stored sid list for [domain | intent]: [%s | %s]", intentResponse.DomainName, intentResponse.IntentName)
 		}
