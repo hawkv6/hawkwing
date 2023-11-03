@@ -7,7 +7,7 @@ import (
 )
 
 type ServerMap struct {
-	Lookup *ServerLookupMap
+	Lookup *Map
 }
 
 func NewServerMap() (*ServerMap, error) {
@@ -18,13 +18,13 @@ func NewServerMap() (*ServerMap, error) {
 
 	lookupMapSpec := collSpec.Maps["server_lookup_map"]
 	return &ServerMap{
-		Lookup: NewServerLookupMap(lookupMapSpec),
+		Lookup: NewMap(lookupMapSpec),
 	}, nil
 }
 
 func (sm *ServerMap) Create() error {
-	if err := sm.Lookup.Build(); err != nil {
-		return fmt.Errorf("could not build server lookup map: %s", err)
+	if err := sm.Lookup.OpenOrCreate(); err != nil {
+		return fmt.Errorf("could not create server lookup map: %s", err)
 	}
 	return nil
 }
