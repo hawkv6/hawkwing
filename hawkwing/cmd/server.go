@@ -10,11 +10,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var serverInterface string
+
 var serverCmd = &cobra.Command{
 	Use:   "server",
 	Short: "Start Hawkwing server",
 	Run: func(cmd *cobra.Command, args []string) {
-		server, err := server.NewServer("host-b")
+		server, err := server.NewServer(serverInterface)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -29,5 +31,6 @@ var serverCmd = &cobra.Command{
 }
 
 func init() {
+	serverCmd.Flags().StringVarP(&serverInterface, "interface", "i", "", "Interface to use for Hawkwing server")
 	rootCmd.AddCommand(serverCmd)
 }
