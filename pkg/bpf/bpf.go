@@ -40,7 +40,6 @@ func CreateMap(spec *ebpf.MapSpec, pinDir string) (*ebpf.Map, error) {
 			return nil, fmt.Errorf("failed to create pin directory: %w", err)
 		}
 		opts.PinPath = pinDir
-		fmt.Println("pinDir: ", pinDir)
 	}
 
 	m, err := createMap(spec, &opts)
