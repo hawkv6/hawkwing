@@ -21,19 +21,6 @@ var rootCmd = &cobra.Command{
 	Complete documentation is available at:
 	https://github.com/hawkv6/hawkwing
 	`,
-	// Run: func(cmd *cobra.Command, args []string) {
-	// 	client, err := client.NewClient("host-a")
-	// 	if err != nil {
-	// 		fmt.Println(err)
-	// 	}
-	// 	client.Start()
-	// 	c := make(chan os.Signal, 1)
-	// 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-	// 	<-c
-
-	// 	client.Stop()
-	// 	fmt.Println("\nHawkwing stopped")
-	// },
 }
 
 func Execute() {
@@ -60,7 +47,6 @@ func initConfig() {
 	}
 }
 
-// TODO implement it proberly
 func checkIsRoot() {
 	if os.Geteuid() != 0 {
 		fmt.Println("Hawkwing must be run as root")

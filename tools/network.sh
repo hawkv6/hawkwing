@@ -75,13 +75,13 @@ start_webservers() {
 start_client_application() {
     echo -e "${GREEN}Starting application...${NC}"
     mount -t bpf bpf /sys/fs/bpf
-    cd .. && ./out/bin/hawkwing client --config ./test_assets/config.yaml
+    cd .. && ./out/bin/hawkwing client --config ./test_assets/config.yaml --interface host-a
 }
 
 start_server_application() {
     echo -e "${GREEN}Starting application...${NC}"
     mount -t bpf bpf /sys/fs/bpf
-    cd .. && ./out/bin/hawkwing server --config ./test_assets/config.yaml
+    cd .. && ./out/bin/hawkwing server --config ./test_assets/config.yaml --interface host-b
 }
 
 # Parse arguments
