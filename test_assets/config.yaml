@@ -3,17 +3,36 @@ hawkeye:
   hostname: fcbb:cc00:5::f # hawkeye.hawk.net
   port: 5001
 services:
-  wb.hawk.net:
-    - intent: high-bandwidth
-      port: 80 # 50 00
-      sid: 
-        - fcbb:bb00:1::2
-        - fcbb:bb00:3::2
-    - intent: low-bandwidth
-      port: 8080 # 90 1f
-  wc.hawk.net:
-    - intent: high-bandwidth
-      port: 1433 # 99 05
-      sid: 
-        - fcbb:bb00:2::2
-        - fcbb:bb00:4::2
+  webserver-b:
+    domain_name: wb.hawk.net
+    applications:
+      - port: 80
+        sid:
+          - fcbb:bb00:1::2
+          - fcbb:bb00:3::2
+      - port: 8080
+        intents:
+          - intent: low-latency
+          - intent: low-bandwidth
+            min_value: 1
+            max_value: 9
+            sfc:
+              - fw
+              - ids
+            flex_algo: 1
+  webserver-c:
+    domain_name: wc.hawk.net
+    applications:
+      - port: 1433
+        sid:
+          - fcbb:bb00:2::2
+          - fcbb:bb00:4::2
+  webserver-d:
+    ipv6_addresses:
+      - fcbb:cc00:4::a
+      - fcbb:cc00:4::b
+      - fcbb:cc00:4::c
+    applications:
+      - port: 443
+        intents:
+          - intent: high-bandwidth
