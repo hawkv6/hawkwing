@@ -18,88 +18,120 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// IntentServiceClient is the client API for IntentService service.
+// IntentControllerClient is the client API for IntentController service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type IntentServiceClient interface {
-	GetIntentDetails(ctx context.Context, in *Intent, opts ...grpc.CallOption) (*Response, error)
+type IntentControllerClient interface {
+	GetIntentPath(ctx context.Context, opts ...grpc.CallOption) (IntentController_GetIntentPathClient, error)
 }
 
-type intentServiceClient struct {
+type intentControllerClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewIntentServiceClient(cc grpc.ClientConnInterface) IntentServiceClient {
-	return &intentServiceClient{cc}
+func NewIntentControllerClient(cc grpc.ClientConnInterface) IntentControllerClient {
+	return &intentControllerClient{cc}
 }
 
-func (c *intentServiceClient) GetIntentDetails(ctx context.Context, in *Intent, opts ...grpc.CallOption) (*Response, error) {
-	out := new(Response)
-	err := c.cc.Invoke(ctx, "/api.IntentService/GetIntentDetails", in, out, opts...)
+func (c *intentControllerClient) GetIntentPath(ctx context.Context, opts ...grpc.CallOption) (IntentController_GetIntentPathClient, error) {
+	stream, err := c.cc.NewStream(ctx, &IntentController_ServiceDesc.Streams[0], "/api.IntentController/GetIntentPath", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &intentControllerGetIntentPathClient{stream}
+	return x, nil
 }
 
-// IntentServiceServer is the server API for IntentService service.
-// All implementations must embed UnimplementedIntentServiceServer
-// for forward compatibility
-type IntentServiceServer interface {
-	GetIntentDetails(context.Context, *Intent) (*Response, error)
-	mustEmbedUnimplementedIntentServiceServer()
+type IntentController_GetIntentPathClient interface {
+	Send(*PathRequest) error
+	Recv() (*PathResult, error)
+	grpc.ClientStream
 }
 
-// UnimplementedIntentServiceServer must be embedded to have forward compatible implementations.
-type UnimplementedIntentServiceServer struct {
+type intentControllerGetIntentPathClient struct {
+	grpc.ClientStream
 }
 
-func (UnimplementedIntentServiceServer) GetIntentDetails(context.Context, *Intent) (*Response, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetIntentDetails not implemented")
-}
-func (UnimplementedIntentServiceServer) mustEmbedUnimplementedIntentServiceServer() {}
-
-// UnsafeIntentServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to IntentServiceServer will
-// result in compilation errors.
-type UnsafeIntentServiceServer interface {
-	mustEmbedUnimplementedIntentServiceServer()
+func (x *intentControllerGetIntentPathClient) Send(m *PathRequest) error {
+	return x.ClientStream.SendMsg(m)
 }
 
-func RegisterIntentServiceServer(s grpc.ServiceRegistrar, srv IntentServiceServer) {
-	s.RegisterService(&IntentService_ServiceDesc, srv)
-}
-
-func _IntentService_GetIntentDetails_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(Intent)
-	if err := dec(in); err != nil {
+func (x *intentControllerGetIntentPathClient) Recv() (*PathResult, error) {
+	m := new(PathResult)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
-	if interceptor == nil {
-		return srv.(IntentServiceServer).GetIntentDetails(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/api.IntentService/GetIntentDetails",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(IntentServiceServer).GetIntentDetails(ctx, req.(*Intent))
-	}
-	return interceptor(ctx, in, info, handler)
+	return m, nil
 }
 
-// IntentService_ServiceDesc is the grpc.ServiceDesc for IntentService service.
+// IntentControllerServer is the server API for IntentController service.
+// All implementations must embed UnimplementedIntentControllerServer
+// for forward compatibility
+type IntentControllerServer interface {
+	GetIntentPath(IntentController_GetIntentPathServer) error
+	mustEmbedUnimplementedIntentControllerServer()
+}
+
+// UnimplementedIntentControllerServer must be embedded to have forward compatible implementations.
+type UnimplementedIntentControllerServer struct {
+}
+
+func (UnimplementedIntentControllerServer) GetIntentPath(IntentController_GetIntentPathServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetIntentPath not implemented")
+}
+func (UnimplementedIntentControllerServer) mustEmbedUnimplementedIntentControllerServer() {}
+
+// UnsafeIntentControllerServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to IntentControllerServer will
+// result in compilation errors.
+type UnsafeIntentControllerServer interface {
+	mustEmbedUnimplementedIntentControllerServer()
+}
+
+func RegisterIntentControllerServer(s grpc.ServiceRegistrar, srv IntentControllerServer) {
+	s.RegisterService(&IntentController_ServiceDesc, srv)
+}
+
+func _IntentController_GetIntentPath_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(IntentControllerServer).GetIntentPath(&intentControllerGetIntentPathServer{stream})
+}
+
+type IntentController_GetIntentPathServer interface {
+	Send(*PathResult) error
+	Recv() (*PathRequest, error)
+	grpc.ServerStream
+}
+
+type intentControllerGetIntentPathServer struct {
+	grpc.ServerStream
+}
+
+func (x *intentControllerGetIntentPathServer) Send(m *PathResult) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *intentControllerGetIntentPathServer) Recv() (*PathRequest, error) {
+	m := new(PathRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// IntentController_ServiceDesc is the grpc.ServiceDesc for IntentController service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var IntentService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "api.IntentService",
-	HandlerType: (*IntentServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
+var IntentController_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "api.IntentController",
+	HandlerType: (*IntentControllerServer)(nil),
+	Methods:     []grpc.MethodDesc{},
+	Streams: []grpc.StreamDesc{
 		{
-			MethodName: "GetIntentDetails",
-			Handler:    _IntentService_GetIntentDetails_Handler,
+			StreamName:    "GetIntentPath",
+			Handler:       _IntentController_GetIntentPath_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
 	Metadata: "proto/intent.proto",
 }
