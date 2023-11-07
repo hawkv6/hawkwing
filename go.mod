@@ -1,6 +1,6 @@
 module github.com/hawkv6/hawkwing
 
-go 1.20
+go 1.21
 
 require (
 	github.com/cilium/ebpf v0.11.0
