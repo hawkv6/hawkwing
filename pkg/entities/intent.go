@@ -14,6 +14,22 @@ type IntentValue struct {
 
 func CreateIntentValueForIntent(intent config.Intent) []IntentValue {
 	intentValues := make([]IntentValue, 0)
+	if intent.Intent == IntentTypeSfc.String() {
+		for _, function := range intent.Functions {
+			intentValues = append(intentValues, IntentValue{
+				IntentValueType: IntentValueTypeSFC,
+				StringValue:     function,
+			})
+		}
+		return intentValues
+	}
+	if intent.Intent == IntentTypeFlexAlgo.String() {
+		intentValues = append(intentValues, IntentValue{
+			IntentValueType: IntentValueTypeFlexAlgoNr,
+			NumberValue:     int32(intent.FlexAlgoNr),
+		})
+		return intentValues
+	}
 	if intent.MinValue != 0 {
 		intentValues = append(intentValues, IntentValue{
 			IntentValueType: IntentValueTypeMinValue,
@@ -24,20 +40,6 @@ func CreateIntentValueForIntent(intent config.Intent) []IntentValue {
 		intentValues = append(intentValues, IntentValue{
 			IntentValueType: IntentValueTypeMaxValue,
 			NumberValue:     int32(intent.MaxValue),
-		})
-	}
-	if intent.Sfc != nil {
-		for _, sfc := range intent.Sfc {
-			intentValues = append(intentValues, IntentValue{
-				IntentValueType: IntentValueTypeSFC,
-				StringValue:     sfc,
-			})
-		}
-	}
-	if intent.FlexAlgo != 0 {
-		intentValues = append(intentValues, IntentValue{
-			IntentValueType: IntentValueTypeFlexAlgoNr,
-			NumberValue:     int32(intent.FlexAlgo),
 		})
 	}
 	return intentValues

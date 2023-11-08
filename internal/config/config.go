@@ -18,13 +18,13 @@ type HawkEyeConfig struct {
 }
 
 type Intent struct {
-	Intent   string   `mapstructure:"intent"`
-	Port     int      `mapstructure:"port"`
-	MinValue int      `mapstructure:"min_value"`
-	MaxValue int      `mapstructure:"max_value"`
-	Sfc      []string `mapstructure:"sfc"`
-	FlexAlgo int      `mapstructure:"flex_algo"`
-	Sid      []string `mapstructure:"sid"`
+	Intent     string   `mapstructure:"intent"`
+	Port       int      `mapstructure:"port"`
+	MinValue   int      `mapstructure:"min_value"`
+	MaxValue   int      `mapstructure:"max_value"`
+	Functions  []string `mapstructure:"functions"`
+	FlexAlgoNr int      `mapstructure:"flex_algo_number"`
+	Sid        []string `mapstructure:"sid"`
 }
 
 type Application struct {

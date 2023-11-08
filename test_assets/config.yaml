@@ -12,14 +12,16 @@ services:
           - fcbb:bb00:3::2
       - port: 8080
         intents:
+          - intent: sfc
+            functions:
+              - fw
+              - ids
+          - intent: flex-algo
+            flex_algo_number: 1
           - intent: low-latency
           - intent: low-bandwidth
             min_value: 1
             max_value: 9
-            sfc:
-              - fw
-              - ids
-            flex_algo: 1
   webserver-c:
     domain_name: wc.hawk.net
     applications:

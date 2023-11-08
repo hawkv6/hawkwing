@@ -57,6 +57,8 @@ const (
 	IntentTypeLowLatency    = IntentType(api.IntentType_INTENT_TYPE_LOW_LATENCY)
 	IntentTypeLowPacketLoss = IntentType(api.IntentType_INTENT_TYPE_LOW_PACKET_LOSS)
 	IntentTypeLowJitter     = IntentType(api.IntentType_INTENT_TYPE_LOW_JITTER)
+	IntentTypeFlexAlgo      = IntentType(api.IntentType_INTENT_TYPE_FLEX_ALGO)
+	IntentTypeSfc           = IntentType(api.IntentType_INTENT_TYPE_SFC)
 )
 
 func (it IntentType) String() string {
@@ -71,6 +73,10 @@ func (it IntentType) String() string {
 		return "low-packet-loss"
 	case IntentTypeLowJitter:
 		return "low-jitter"
+	case IntentTypeFlexAlgo:
+		return "flex-algo"
+	case IntentTypeSfc:
+		return "sfc"
 	default:
 		return "unspecified"
 	}
@@ -90,6 +96,10 @@ func ParseIntentType(s string) (IntentType, error) {
 		return IntentTypeLowJitter, nil
 	case "unspecified":
 		return IntentTypeUnspecified, nil
+	case "flex-algo":
+		return IntentTypeFlexAlgo, nil
+	case "sfc":
+		return IntentTypeSfc, nil
 	default:
 		return 0, fmt.Errorf("invalid IntentType: %s", s)
 	}
