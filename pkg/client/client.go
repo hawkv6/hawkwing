@@ -80,10 +80,9 @@ func NewClient(interfaceName string) (*Client, error) {
 }
 
 func (c *Client) Start() {
-	c.wg.Add(3)
+	c.wg.Add(2)
 
 	go func() {
-		defer c.wg.Done()
 		c.messenger.Start()
 		c.adapter.Start()
 		c.syncer.Start()
