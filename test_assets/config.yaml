@@ -38,3 +38,5 @@ services:
       - port: 443
         intents:
           - intent: high-bandwidth
+            min_value: 1
+            max_value: 9

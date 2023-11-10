@@ -39,17 +39,9 @@ func (s *Syncer) FetchAll() {
 	for key, _ := range config.Params.Services {
 		pathRequests := entities.CreatePathRequestsForService(key)
 		for _, pathRequest := range pathRequests {
-			s.reqChan <- &pathRequest
+			pr := pathRequest
+			s.reqChan <- &pr
 		}
-
-		// for _, service := range services {
-		// 	if service.Sid == nil {
-		// 		s.reqChan <- &messaging.PathRequest{
-		// 			DomainName: key,
-		// 			IntentName: service.Intent,
-		// 		}
-		// 	}
-		// }
 	}
 }
 

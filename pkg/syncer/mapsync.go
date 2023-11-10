@@ -27,7 +27,6 @@ func (s *Syncer) storeSidList(intentResponse *entities.PathResult) error {
 		return fmt.Errorf("could not find a value in the reverse map for %s: %s", intentResponse.Ipv6DestinationAddress, err)
 	}
 
-	// ports := s.getPortsToQuery(intentResponse.Ipv6DestinationAddress, intentResponse.Intent)
 	portToUpdate := s.getApplicationPortToUpdate(intentResponse)
 	sidListData := maps.GenerateSidLookupValue(intentResponse.Ipv6SidAddresses)
 
@@ -36,15 +35,17 @@ func (s *Syncer) storeSidList(intentResponse *entities.PathResult) error {
 		return fmt.Errorf("could not update inner map: %s", err)
 	}
 	return nil
-	// for _, port := range ports {
-	// 	err = s.cm.Outer.UpdateInner(innerMapId, uint16(port), sidListData)
-	// 	if err != nil {
-	// 		return fmt.Errorf("could not update inner map: %s", err)
-	// 	}
-	// }
-	// return nil
 }
 
+// getApplicationPortToUpdate returns the port of the application that needs to
+// be updated based on the intent result.
+//
+// Parameters:
+//   - intentResult: The intent result containing the intents that were
+//     satisfied.
+//
+// Returns:
+//   - The port of the application that needs to be updated.
 func (s *Syncer) getApplicationPortToUpdate(intentResult *entities.PathResult) int {
 	configIntents := s.getApplicationConfigIntents(intentResult)
 	resultIntents := s.getApplicationResultIntents(intentResult)
@@ -64,6 +65,15 @@ func (s *Syncer) getApplicationPortToUpdate(intentResult *entities.PathResult) i
 	return 0
 }
 
+// getApplicationResultIntents returns the intents that were satisfied in the
+// intent result.
+//
+// Parameters:
+//   - intentResult: The intent result containing the intents that were
+//     satisfied.
+//
+// Returns:
+//   - The intents that were satisfied in the intent result.
 func (s *Syncer) getApplicationResultIntents(intentResult *entities.PathResult) []string {
 	var intents []string
 	for _, ir := range intentResult.Intents {
@@ -72,6 +82,15 @@ func (s *Syncer) getApplicationResultIntents(intentResult *entities.PathResult) 
 	return intents
 }
 
+// getApplicationConfigIntents returns the intents that were configured for the
+// application.
+//
+// Parameters:
+//   - intentResult: The intent result containing the intents that were
+//     satisfied.
+//
+// Returns:
+//   - The intents that were configured for the application.
 func (s *Syncer) getApplicationConfigIntents(intentResult *entities.PathResult) []string {
 	var intents []string
 	for _, service := range config.Params.Services {
@@ -85,28 +104,3 @@ func (s *Syncer) getApplicationConfigIntents(intentResult *entities.PathResult) 
 	}
 	return intents
 }
-
-// getPortsToQuery returns a list of ports to query for the given ipv6 address
-// and intent type.
-//
-// Parameters:
-//   - ipv6Addr: The ipv6 address to query.
-//   - intentType: The intent type to query.
-//
-// Returns:
-//   - A list of ports to query.
-// func (s *Syncer) getPortsToQuery(ipv6Addr string, intentType entities.IntentType) []int {
-// 	var ports []int
-// 	for _, service := range config.Params.Services {
-// 		for _, ip := range service.Ipv6Addresses {
-// 			if ip == ipv6Addr {
-// 				for _, intent := range service.Intents {
-// 					if intentType.String() == intent.Intent {
-// 						ports = append(ports, intent.Port)
-// 					}
-// 				}
-// 			}
-// 		}
-// 	}
-// 	return ports
-// }

@@ -2,8 +2,10 @@ package messaging
 
 import (
 	"context"
+	"strconv"
 	"time"
 
+	"github.com/hawkv6/hawkwing/internal/config"
 	"github.com/hawkv6/hawkwing/pkg/api"
 	"github.com/hawkv6/hawkwing/pkg/logging"
 	"google.golang.org/grpc"
@@ -30,14 +32,12 @@ func NewMessagingClient(messagingChannels *MessagingChannels) *MessagingClient {
 
 func (c *MessagingClient) Start() {
 	c.connect()
-	// c.handleIntentRequest()
 	go c.manageStreams()
 
 }
 
 func (c *MessagingClient) connect() {
-	// connectionAddress := config.Params.HawkEye.Hostname + ":" + strconv.Itoa(config.Params.HawkEye.Port)
-	connectionAddress := "[fcbb:cc00:5::f]:5001"
+	connectionAddress := "[" + config.Params.HawkEye.Hostname + "]" + ":" + strconv.Itoa(config.Params.HawkEye.Port)
 	for {
 		conn, err := grpc.Dial(connectionAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
@@ -66,11 +66,10 @@ func (c *MessagingClient) manageStreams() {
 		go c.handleGetIntentPathResults(ctx, stream)
 
 		err = <-c.streamErrors
-		log.Printf("error received from stream: %v", err)
-
 		cancel()
 
 		log.Fatalf("stream error: %v", err)
+		// log.WithError(err).Errorf("stream error")
 	}
 }
 
@@ -106,19 +105,3 @@ func (c *MessagingClient) handleGetIntentPathResults(ctx context.Context, stream
 		}
 	}
 }
-
-// func (c *MessagingClient) handleIntentRequest() {
-// 	go func() {
-// 		for {
-// 			intentRequest := <-c.messagingChannels.ChMessageIntentRequest
-// 			intentResponse, err := c.GetIntentDetails(context.Background(), intentRequest)
-// 			if err != nil {
-// 				log.Printf("failed to get intent details: %v, retrying...", err)
-// 				c.connect()
-// 				continue
-// 			}
-// 			c.messagingChannels.ChMessageIntentResponse <- intentResponse
-// 			log.Printf("received intent response for [domain | intent]: [%s | %s]", intentResponse.DomainName, intentEnumToString(intentResponse.Intent))
-// 		}
-// 	}()
-// }
