@@ -49,7 +49,7 @@ test-coverage: ## Run go tests with coverage
 	go test ./... -coverprofile=coverage.out
 
 generate-proto: ## Generate gRPC code
-	protoc --go_out=. --go_opt=Mproto/intent.proto=pkg/api --go-grpc_out=. --go-grpc_opt=Mproto/intent.proto=pkg/api proto/*.proto
+	protoc --go_out=. --go_opt=Mproto/intent.proto=pkg/api --go-grpc_out=. --go-grpc_opt=Mproto/intent.proto=pkg/api proto/*.proto --experimental_allow_proto3_optional
 
 setup-network: ## Setup the development network environment
 	cd tools && sudo ./network.sh -s

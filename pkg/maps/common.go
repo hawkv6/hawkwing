@@ -49,6 +49,22 @@ func FormatDNSName(domain string) ([256]byte, error) {
 	return result, nil
 }
 
+// Ipv6ToInet6 takes an IPv6 address in string format and returns a struct containing
+// the IPv6 address in byte format. The returned struct is intended for use as a key
+// in an eBPF map.
+//
+// Parameters:
+//   - ipv6Addr: An IPv6 address in string format.
+//
+// Returns:
+//   - A struct containing a 128-bit IPv6 address in byte format.
+func Ipv6ToInet6(ipv6Addr string) struct{ In6U struct{ U6Addr8 [16]uint8 } } {
+	ipv6 := net.ParseIP(ipv6Addr)
+	var result struct{ In6U struct{ U6Addr8 [16]uint8 } }
+	copy(result.In6U.U6Addr8[:], ipv6.To16())
+	return result
+}
+
 // SidToInet6Sid takes a slice of IPv6 Segment IDs (SIDs) in string format and returns an array
 // of 10 structs containing the IPv6 SIDs in reversed order. The returned array is intended
 // for use in constructing the SID List for the Segment Routing Header (SRH) in IPv6 packets.
@@ -88,7 +104,11 @@ func SidToInet6Sid(sidList []string) [10]struct{ In6U struct{ U6Addr8 [16]uint8 
 // Returns:
 //   - A SidListData struct containing the IPv6 SIDs in reversed order.
 func GenerateSidLookupValue(sidList []string) SidListData {
-	// TODO: Check what to do if the list is empty (sidlistsize = 0)
+	if len(sidList) == 0 {
+		return SidListData{
+			SidlistSize: 0,
+		}
+	}
 	result := SidListData{
 		SidlistSize: uint32(len(sidList) + 1), // +1 for the empty one
 		Sidlist:     SidToInet6Sid(sidList),

@@ -1,0 +1,71 @@
+package entities
+
+import (
+	"log"
+
+	"github.com/hawkv6/hawkwing/internal/config"
+)
+
+type IntentValue struct {
+	IntentValueType IntentValueType
+	NumberValue     int32
+	StringValue     string
+}
+
+func CreateIntentValueForIntent(intent config.Intent) []IntentValue {
+	intentValues := make([]IntentValue, 0)
+	if intent.Intent == IntentTypeSfc.String() {
+		for _, function := range intent.Functions {
+			intentValues = append(intentValues, IntentValue{
+				IntentValueType: IntentValueTypeSFC,
+				StringValue:     function,
+			})
+		}
+		return intentValues
+	}
+	if intent.Intent == IntentTypeFlexAlgo.String() {
+		intentValues = append(intentValues, IntentValue{
+			IntentValueType: IntentValueTypeFlexAlgoNr,
+			NumberValue:     int32(intent.FlexAlgoNr),
+		})
+		return intentValues
+	}
+	if intent.MinValue != 0 {
+		intentValues = append(intentValues, IntentValue{
+			IntentValueType: IntentValueTypeMinValue,
+			NumberValue:     int32(intent.MinValue),
+		})
+	}
+	if intent.MaxValue != 0 {
+		intentValues = append(intentValues, IntentValue{
+			IntentValueType: IntentValueTypeMaxValue,
+			NumberValue:     int32(intent.MaxValue),
+		})
+	}
+	return intentValues
+}
+
+type Intent struct {
+	IntentType   IntentType
+	IntentValues []IntentValue
+}
+
+func CreateIntentsForServiceApplication(serviceKey string, applicationPort int) []Intent {
+	serviceCfg := config.Params.Services[serviceKey]
+	intents := make([]Intent, 0)
+	for _, application := range serviceCfg.Applications {
+		if application.Port == applicationPort {
+			for _, intent := range application.Intents {
+				intentType, err := ParseIntentType(intent.Intent)
+				if err != nil {
+					log.Fatalf("failed to parse intent type %s: %v", intent.Intent, err)
+				}
+				intents = append(intents, Intent{
+					IntentType:   intentType,
+					IntentValues: CreateIntentValueForIntent(intent),
+				})
+			}
+		}
+	}
+	return intents
+}

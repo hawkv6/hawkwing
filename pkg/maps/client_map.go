@@ -9,9 +9,10 @@ import (
 )
 
 type ClientMap struct {
-	Outer  *OuterMap
-	Inners map[string]*InnerMap
-	Lookup *LookupMap
+	Outer   *OuterMap
+	Inners  map[string]*InnerMap
+	Lookup  *LookupMap
+	Reverse *ReverseMap
 }
 
 func NewClientMap() (*ClientMap, error) {
@@ -21,10 +22,12 @@ func NewClientMap() (*ClientMap, error) {
 	}
 	outerMapSpec := clientElfSpec.Maps["client_outer_map"]
 	lookupMapSpec := clientElfSpec.Maps["client_lookup_map"]
+	reverseMapSpec := clientElfSpec.Maps["client_reverse_map"]
 	return &ClientMap{
-		Outer:  NewOuterMap(outerMapSpec),
-		Inners: make(map[string]*InnerMap),
-		Lookup: NewLookupMap(lookupMapSpec),
+		Outer:   NewOuterMap(outerMapSpec),
+		Inners:  make(map[string]*InnerMap),
+		Lookup:  NewLookupMap(lookupMapSpec),
+		Reverse: NewReverseMap(reverseMapSpec),
 	}, nil
 }
 
@@ -47,19 +50,22 @@ func (cm *ClientMap) BuildClientDataMap() error {
 	if err := cm.Outer.BuildWith(cm.Inners); err != nil {
 		return fmt.Errorf("could not build outer map: %s", err)
 	}
+	if err := cm.Reverse.BuildWith(cm.Inners); err != nil {
+		return fmt.Errorf("could not build reverse map: %s", err)
+	}
 	return nil
 }
 
 func (cm *ClientMap) clientInnerMapSpecs() map[string]*ebpf.MapSpec {
 	innerMapSpecs := make(map[string]*ebpf.MapSpec)
-	for key, services := range config.Params.Services {
+	for key, serviceCfg := range config.Params.Services {
 		innerMapSpec := cm.Outer.spec.InnerMap.Copy()
 		innerMapSpec.Name = fmt.Sprintf("%s_%s", "client_inner", key)
-		innerMapSpec.Contents = make([]ebpf.MapKV, len(services))
-		for i, service := range services {
-			value := GenerateSidLookupValue(service.Sid)
+		innerMapSpec.Contents = make([]ebpf.MapKV, len(serviceCfg.Applications))
+		for i, application := range serviceCfg.Applications {
+			value := GenerateSidLookupValue(application.Sid)
 			innerMapSpec.Contents[uint32(i)] = ebpf.MapKV{
-				Key:   uint16(service.Port),
+				Key:   uint16(application.Port),
 				Value: value,
 			}
 		}

@@ -13,19 +13,35 @@ var (
 )
 
 type HawkEyeConfig struct {
-	Hostname string
-	Port     int
+	Hostname string `mapstructure:"hostname"`
+	Port     int    `mapstructure:"port"`
+}
+
+type Intent struct {
+	Intent     string   `mapstructure:"intent"`
+	Port       int      `mapstructure:"port"`
+	MinValue   int      `mapstructure:"min_value"`
+	MaxValue   int      `mapstructure:"max_value"`
+	Functions  []string `mapstructure:"functions"`
+	FlexAlgoNr int      `mapstructure:"flex_algo_number"`
+	Sid        []string `mapstructure:"sid"`
+}
+
+type Application struct {
+	Port    int      `mapstructure:"port"`
+	Sid     []string `mapstructure:"sid"`
+	Intents []Intent `mapstructure:"intents"`
 }
 
 type ServiceConfig struct {
-	Intent string
-	Port   int
-	Sid    []string
+	DomainName    string        `mapstructure:"domain_name"`
+	Ipv6Addresses []string      `mapstructure:"ipv6_addresses"`
+	Applications  []Application `mapstructure:"applications"`
 }
 
 type Config struct {
 	HawkEye  HawkEyeConfig
-	Services map[string][]ServiceConfig
+	Services map[string]ServiceConfig
 }
 
 func init() {

@@ -2,10 +2,11 @@ package syncer
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/hawkv6/hawkwing/internal/config"
+	"github.com/hawkv6/hawkwing/pkg/entities"
 	"github.com/hawkv6/hawkwing/pkg/maps"
-	"github.com/hawkv6/hawkwing/pkg/messaging"
 )
 
 // storeSidList stores the sid list received from the adapter in the client map.
@@ -17,45 +18,89 @@ import (
 //
 // Returns:
 //   - An error if the sid list could not be stored.
-func (s *Syncer) storeSidList(intentResponse *messaging.IntentResponse) error {
-	ports := s.getPortsToQuery(intentResponse.DomainName, intentResponse.IntentName)
-	formattedDomainName, err := maps.FormatDNSName(intentResponse.DomainName)
+func (s *Syncer) storeSidList(intentResponse *entities.PathResult) error {
+	var err error
+
+	var innerMapId uint32
+	err = s.cm.Reverse.Map.Lookup(maps.Ipv6ToInet6(intentResponse.Ipv6DestinationAddress), &innerMapId)
 	if err != nil {
-		return fmt.Errorf("could not format domain name: %s", err)
+		return fmt.Errorf("could not find a value in the reverse map for %s: %s", intentResponse.Ipv6DestinationAddress, err)
 	}
 
-	var lookupValue uint32
-	err = s.cm.Lookup.Map.Lookup(formattedDomainName, &lookupValue)
+	portToUpdate := s.getApplicationPortToUpdate(intentResponse)
+	sidListData := maps.GenerateSidLookupValue(intentResponse.Ipv6SidAddresses)
+
+	err = s.cm.Outer.UpdateInner(innerMapId, uint16(portToUpdate), sidListData)
 	if err != nil {
-		return fmt.Errorf("could not find a value in the lookup map for %s: %s", intentResponse.DomainName, err)
-	}
-
-	sidListData := maps.GenerateSidLookupValue(intentResponse.SidList)
-
-	for _, port := range ports {
-		err = s.cm.Outer.UpdateInner(lookupValue, uint16(port), sidListData)
-		if err != nil {
-			return fmt.Errorf("could not update inner map: %s", err)
-		}
+		return fmt.Errorf("could not update inner map: %s", err)
 	}
 	return nil
 }
 
-// getPortsToQuery returns a list of ports to query for the given domain name
-// and intent.
+// getApplicationPortToUpdate returns the port of the application that needs to
+// be updated based on the intent result.
 //
 // Parameters:
-//   - domainName: The domain name to query.
-//   - intent: The intent to query.
+//   - intentResult: The intent result containing the intents that were
+//     satisfied.
 //
 // Returns:
-//   - A list of ports to query.
-func (s *Syncer) getPortsToQuery(domainName string, intent string) []int {
-	var ports []int
-	for _, service := range config.Params.Services[domainName] {
-		if service.Intent == intent && service.Sid == nil {
-			ports = append(ports, service.Port)
+//   - The port of the application that needs to be updated.
+func (s *Syncer) getApplicationPortToUpdate(intentResult *entities.PathResult) int {
+	configIntents := s.getApplicationConfigIntents(intentResult)
+	resultIntents := s.getApplicationResultIntents(intentResult)
+
+	for _, services := range config.Params.Services {
+		if slices.Contains(services.Ipv6Addresses, intentResult.Ipv6DestinationAddress) {
+			for _, application := range services.Applications {
+				for _, ri := range resultIntents {
+					if slices.Contains(configIntents, ri) {
+						return application.Port
+					}
+				}
+			}
 		}
 	}
-	return ports
+
+	return 0
+}
+
+// getApplicationResultIntents returns the intents that were satisfied in the
+// intent result.
+//
+// Parameters:
+//   - intentResult: The intent result containing the intents that were
+//     satisfied.
+//
+// Returns:
+//   - The intents that were satisfied in the intent result.
+func (s *Syncer) getApplicationResultIntents(intentResult *entities.PathResult) []string {
+	var intents []string
+	for _, ir := range intentResult.Intents {
+		intents = append(intents, ir.IntentType.String())
+	}
+	return intents
+}
+
+// getApplicationConfigIntents returns the intents that were configured for the
+// application.
+//
+// Parameters:
+//   - intentResult: The intent result containing the intents that were
+//     satisfied.
+//
+// Returns:
+//   - The intents that were configured for the application.
+func (s *Syncer) getApplicationConfigIntents(intentResult *entities.PathResult) []string {
+	var intents []string
+	for _, service := range config.Params.Services {
+		if slices.Contains(service.Ipv6Addresses, intentResult.Ipv6DestinationAddress) {
+			for _, application := range service.Applications {
+				for _, intent := range application.Intents {
+					intents = append(intents, intent.Intent)
+				}
+			}
+		}
+	}
+	return intents
 }

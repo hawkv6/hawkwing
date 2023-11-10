@@ -1,5 +1,7 @@
 package messaging
 
+import "github.com/hawkv6/hawkwing/pkg/entities"
+
 type MessagingAdapter struct {
 	messagingChannels *MessagingChannels
 	adapterChannels   *AdapterChannels
@@ -26,11 +28,8 @@ func (a *MessagingAdapter) HandleIntent() {
 	go func() {
 		for {
 			intentResponse := <-a.messagingChannels.ChMessageIntentResponse
-			a.adapterChannels.ChAdapterIntentResponse <- &IntentResponse{
-				DomainName: intentResponse.DomainName,
-				IntentName: intentEnumToString(intentResponse.Intent),
-				SidList:    intentResponse.Ipv6Addresses,
-			}
+			pathResult := entities.UnmarshalPathResult(intentResponse)
+			a.adapterChannels.ChAdapterIntentResponse <- pathResult
 		}
 	}()
 }
