@@ -4,41 +4,42 @@ import (
 	"log"
 
 	"github.com/hawkv6/hawkwing/internal/config"
+	"github.com/hawkv6/hawkwing/pkg/types"
 )
 
 type IntentValue struct {
-	IntentValueType IntentValueType
+	IntentValueType types.IntentValueType
 	NumberValue     int32
 	StringValue     string
 }
 
 func CreateIntentValueForIntent(intent config.Intent) []IntentValue {
 	intentValues := make([]IntentValue, 0)
-	if intent.Intent == IntentTypeSfc.String() {
+	if intent.Intent == types.IntentTypeSfc.String() {
 		for _, function := range intent.Functions {
 			intentValues = append(intentValues, IntentValue{
-				IntentValueType: IntentValueTypeSFC,
+				IntentValueType: types.IntentValueTypeSFC,
 				StringValue:     function,
 			})
 		}
 		return intentValues
 	}
-	if intent.Intent == IntentTypeFlexAlgo.String() {
+	if intent.Intent == types.IntentTypeFlexAlgo.String() {
 		intentValues = append(intentValues, IntentValue{
-			IntentValueType: IntentValueTypeFlexAlgoNr,
+			IntentValueType: types.IntentValueTypeFlexAlgoNr,
 			NumberValue:     int32(intent.FlexAlgoNr),
 		})
 		return intentValues
 	}
 	if intent.MinValue != 0 {
 		intentValues = append(intentValues, IntentValue{
-			IntentValueType: IntentValueTypeMinValue,
+			IntentValueType: types.IntentValueTypeMinValue,
 			NumberValue:     int32(intent.MinValue),
 		})
 	}
 	if intent.MaxValue != 0 {
 		intentValues = append(intentValues, IntentValue{
-			IntentValueType: IntentValueTypeMaxValue,
+			IntentValueType: types.IntentValueTypeMaxValue,
 			NumberValue:     int32(intent.MaxValue),
 		})
 	}
@@ -46,7 +47,7 @@ func CreateIntentValueForIntent(intent config.Intent) []IntentValue {
 }
 
 type Intent struct {
-	IntentType   IntentType
+	IntentType   types.IntentType
 	IntentValues []IntentValue
 }
 
@@ -56,7 +57,7 @@ func CreateIntentsForServiceApplication(serviceKey string, applicationPort int) 
 	for _, application := range serviceCfg.Applications {
 		if application.Port == applicationPort {
 			for _, intent := range application.Intents {
-				intentType, err := ParseIntentType(intent.Intent)
+				intentType, err := types.ParseIntentType(intent.Intent)
 				if err != nil {
 					log.Fatalf("failed to parse intent type %s: %v", intent.Intent, err)
 				}

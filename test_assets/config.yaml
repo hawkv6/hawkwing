@@ -10,12 +10,13 @@ services:
         sid:
           - fcbb:bb00:1::2
           - fcbb:bb00:3::2
-      - port: 8080
         intents:
           - intent: sfc
             functions:
               - fw
               - ids
+      - port: 8080
+        intents:
           - intent: flex-algo
             flex_algo_number: 1
           - intent: low-latency
@@ -37,6 +38,5 @@ services:
     applications:
       - port: 443
         intents:
-          - intent: high-bandwidth
-            min_value: 1
-            max_value: 9
+          - intent: flex-algo
+            flex_algo_number: 1
