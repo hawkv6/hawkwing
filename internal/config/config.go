@@ -3,28 +3,31 @@ package config
 import (
 	"fmt"
 
+	"github.com/hawkv6/hawkwing/pkg/logging"
 	"github.com/spf13/viper"
 )
+
+const Subsystem = "go-config"
 
 var (
 	// Use \ as key delimiter because we have . in the key
 	viperInstance = viper.NewWithOptions(viper.KeyDelimiter("\\"))
 	Params        Config
+	log           = logging.DefaultLogger.WithField("subsystem", Subsystem)
 )
 
 type HawkEyeConfig struct {
-	Hostname string `mapstructure:"hostname"`
-	Port     int    `mapstructure:"port"`
+	// TODO: validate the format of the hostname
+	Hostname string `mapstructure:"hostname" validate:"required"`
+	Port     int    `mapstructure:"port" validate:"required,gt=0,lt=65535"`
 }
 
 type Intent struct {
 	Intent     string   `mapstructure:"intent"`
-	Port       int      `mapstructure:"port"`
 	MinValue   int      `mapstructure:"min_value"`
 	MaxValue   int      `mapstructure:"max_value"`
 	Functions  []string `mapstructure:"functions"`
 	FlexAlgoNr int      `mapstructure:"flex_algo_number"`
-	Sid        []string `mapstructure:"sid"`
 }
 
 type Application struct {
@@ -40,8 +43,8 @@ type ServiceConfig struct {
 }
 
 type Config struct {
-	HawkEye  HawkEyeConfig
-	Services map[string]ServiceConfig
+	HawkEye  HawkEyeConfig            `validate:"required,dive,required"`
+	Services map[string]ServiceConfig `validate:"required,dive,required"`
 }
 
 func init() {
@@ -59,6 +62,8 @@ func Parse() error {
 	if err := viperInstance.UnmarshalExact(&Params); err != nil {
 		return fmt.Errorf("failed to parse config: %v", err)
 	}
+
+	Validate()
 
 	return nil
 }
