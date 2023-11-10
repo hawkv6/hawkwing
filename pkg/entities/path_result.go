@@ -1,6 +1,9 @@
 package entities
 
-import "github.com/hawkv6/hawkwing/pkg/api"
+import (
+	"github.com/hawkv6/hawkwing/pkg/api"
+	"github.com/hawkv6/hawkwing/pkg/types"
+)
 
 type PathResult struct {
 	Ipv6DestinationAddress string
@@ -45,13 +48,13 @@ func UnmarshalPathResult(pr *api.PathResult) *PathResult {
 		intentValues := make([]IntentValue, 0, len(intent.Values))
 		for _, val := range intent.Values {
 			intentValues = append(intentValues, IntentValue{
-				IntentValueType: IntentValueType(val.Type),
+				IntentValueType: types.IntentValueType(val.Type),
 				NumberValue:     *val.NumberValue,
 				StringValue:     *val.StringValue,
 			})
 		}
 		intents = append(intents, Intent{
-			IntentType:   IntentType(intent.Type),
+			IntentType:   types.IntentType(intent.Type),
 			IntentValues: intentValues,
 		})
 	}
