@@ -10,5 +10,5 @@
 .DS_Store
 *.swp
 .vscode/
-
+.VSCodeCounter
 out
