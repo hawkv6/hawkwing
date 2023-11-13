@@ -1,32 +1,34 @@
 # HawkWing
 The wings which brings your packets to the destination
 
+## Configuration
 ```yaml
 ---
 hawkeye:
   hostname: hawkeye.hawk.net
-  port: 1234
+  port: 5001
 services:
-  wb.hawk.net:
-    - intent: high-bandwidth
-      port: 80
-      sid: 
-        - fcbb:bb00:1::2
-        - fcbb:bb00:3::2
-    - intent: low-bandwidth
-      port: 8080
-  wc.hawk.net:
-    - intent: high-bandwidth
-      port: 1433
-      sid: 
-        - fcbb:bb00:2::2
-        - fcbb:bb00:4::2
+  service1:
+    domain_name: service1.hawk.net
+    applications:
+      - port: 80
+        intents:
+          - intent: sfc
+            functions:
+              - function1
+              - function2
+    sid:
+      - fcbb:bb00:1::2
+      - fcbb:bb00:3::2
+  service2:
+    domain_name: service2.hawk.net
+    applications:
+      - port: 80
+        intents:
+          - intent: low-latency
+            min_value: 10
+            max_value: 20
 ```
 
-```
-bpftool net show
-bpftool prog tracelog
-trace add virtio-input 10
-mount --make-shared /sys/fs/bpf
-```
-
+## Development Network
+![Development Network](docs/network.png)
