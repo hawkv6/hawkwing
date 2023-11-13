@@ -49,6 +49,10 @@ func ApplicationValidation(sl validator.StructLevel) {
 			if k >= 1 && application.Intents[0].Intent != types.IntentTypeSfc.String() {
 				sl.ReportError(intent.Intent, "intent", "", "flex-algo intent must be the first intent in the list", "")
 			}
+
+			if application.Sid == nil {
+				sl.ReportError(intent.Intent, "sid", "", "sid is required as backup path when using an flex-algo intent", "")
+			}
 		}
 	}
 }

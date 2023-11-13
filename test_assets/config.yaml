@@ -11,10 +11,11 @@ services:
           - fcbb:bb00:1::2
           - fcbb:bb00:3::2
         intents:
-          - intent: sfc
-            functions:
-              - fw
-              - ids
+          - intent: low-latency
+          # - intent: sfc
+          #   functions:
+          #     - fw
+          #     - ids
       - port: 8080
         intents:
           - intent: flex-algo
@@ -30,6 +31,9 @@ services:
         sid:
           - fcbb:bb00:2::2
           - fcbb:bb00:4::2
+        intents:
+          - intent: flex-algo
+            flex_algo_number: 1
   webserver-d:
     ipv6_addresses:
       - fcbb:cc00:4::a

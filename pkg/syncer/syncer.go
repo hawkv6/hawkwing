@@ -32,6 +32,7 @@ func NewSyncer(adapterChannels *messaging.AdapterChannels, cm *maps.ClientMap) *
 func (s *Syncer) Start() {
 	log.Printf("start synchronization process")
 	s.handleIntentMessages()
+	s.resolver.Start()
 }
 
 func (s *Syncer) FetchAll() {
@@ -49,8 +50,9 @@ func (s *Syncer) handleIntentMessages() {
 	go func() {
 		for {
 			intentRequest := <-s.reqChan
-			s.adapterChannels.ChAdapterIntentRequest <- intentRequest
-			log.Printf("requested intent details for %s", intentRequest.Ipv6DestinationAddress)
+			pr := intentRequest
+			s.adapterChannels.ChAdapterIntentRequest <- pr
+			log.Printf("requested intent details for %s", pr.Ipv6DestinationAddress)
 		}
 	}()
 	go func() {

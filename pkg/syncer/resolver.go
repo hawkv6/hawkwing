@@ -1,9 +1,11 @@
 package syncer
 
 import (
+	"context"
 	"net"
 	"time"
 
+	"github.com/hawkv6/hawkwing/internal/config"
 	"github.com/hawkv6/hawkwing/pkg/entities"
 )
 
@@ -23,50 +25,71 @@ func NewResolverService(reqChan chan *entities.PathRequest) *ResolverService {
 	}
 }
 
-// func (rs *ResolverService) Start() error {
-// 	return rs.ProcessConfig(context.Background())
-// }
+func (rs *ResolverService) Start() {
+	ticker := time.NewTicker(10 * time.Second)
+	if err := rs.ProcessConfig(context.Background()); err != nil {
+		log.WithError(err).Error("could not process config")
+	}
+	go func() {
+		for {
+			<-ticker.C
+			ctx := context.Background()
+			if err := rs.ProcessConfig(ctx); err != nil {
+				log.WithError(err).Error("could not process config")
+			}
+		}
+	}()
+}
 
-// func (rs *ResolverService) ProcessConfig(ctx context.Context) error {
-// 	for key, svcConfig := range config.Params.Services {
-// 		if len(svcConfig.Ipv6Addresses) == 0 {
-// 			ipv6Addresses, err := rs.ResolveIPv6Addresses(ctx, svcConfig.DomainName)
-// 			if err != nil {
-// 				return err
-// 			}
+func (rs *ResolverService) ProcessConfig(ctx context.Context) error {
+	for key, serviceCfg := range config.Params.Services {
+		if serviceCfg.Ipv6Addresses == nil {
+			ipv6Addresses, err := rs.ResolveIPv6Addresses(ctx, serviceCfg.DomainName)
+			if err != nil {
+				return err
+			}
+			var ipv6AddrStrs []string
+			for _, ipAddr := range ipv6Addresses {
+				ipv6AddrStrs = append(ipv6AddrStrs, ipAddr.String())
+			}
 
-// 			var ipv6AddrStrs []string
-// 			for _, ipAddr := range ipv6Addresses {
-// 				ipv6AddrStrs = append(ipv6AddrStrs, ipAddr.String())
-// 			}
-// 			svcConfig.Ipv6Addresses = ipv6AddrStrs
-// 		}
-// 	}
-// 	return nil
-// }
+			serviceCfg.Ipv6Addresses = ipv6AddrStrs
+			config.Params.Services[key] = serviceCfg
 
-// func (rs *ResolverService) ResolveIPv6Addresses(ctx context.Context, domainName string) ([]net.IPAddr, error) {
-// 	if ips, found := rs.cache[domainName]; found {
-// 		if time.Now().Before(rs.cacheTTL[domainName]) {
-// 			return ips, nil
-// 		}
-// 	}
+			pathRequests := entities.CreatePathRequestsForService(key)
+			for _, pathRequest := range pathRequests {
+				pr := pathRequest
+				rs.reqChan <- &pr
+			}
+		}
+	}
+	return nil
+}
 
-// 	ips, err := rs.dNSResolver.LookupIPAddr(ctx, domainName)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (rs *ResolverService) ResolveIPv6Addresses(ctx context.Context, domainName string) ([]net.IPAddr, error) {
+	log.Info("resolving IPv6 addresses for ", domainName)
+	if ips, found := rs.cache[domainName]; found {
+		if time.Now().Before(rs.cacheTTL[domainName]) {
+			return ips, nil
+		}
+	}
 
-// 	var ipv6Addresses []net.IPAddr
-// 	for _, ip := range ips {
-// 		if ip.IP.To4() == nil {
-// 			ipv6Addresses = append(ipv6Addresses, ip)
-// 		}
-// 	}
+	ips, err := rs.dNSResolver.LookupIPAddr(ctx, domainName)
+	if err != nil {
+		return nil, err
+	}
+	log.Info("resolved IPv6 addresses for ", domainName, ": ", ips)
 
-// 	ttl := time.Now().Add(1 * time.Hour)
-// 	rs.cache[domainName] = ipv6Addresses
-// 	rs.cacheTTL[domainName] = ttl
+	var ipv6Addresses []net.IPAddr
+	for _, ip := range ips {
+		if ip.IP.To4() == nil {
+			ipv6Addresses = append(ipv6Addresses, ip)
+		}
+	}
 
-// 	return ipv6Addresses, nil
-// }
+	ttl := time.Now().Add(1 * time.Minute)
+	rs.cache[domainName] = ipv6Addresses
+	rs.cacheTTL[domainName] = ttl
+
+	return ipv6Addresses, nil
+}
