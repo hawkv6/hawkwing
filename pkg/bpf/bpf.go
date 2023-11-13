@@ -33,9 +33,6 @@ func CreateMap(spec *ebpf.MapSpec, pinDir string) (*ebpf.Map, error) {
 		if pinDir == "" {
 			return nil, fmt.Errorf("map requires pinning, but no pinDir specified")
 		}
-		if spec.Name == "" {
-			return nil, fmt.Errorf("map requires pinning, but no name specified")
-		}
 		if err := os.MkdirAll(pinDir, 0755); err != nil {
 			return nil, fmt.Errorf("failed to create pin directory: %w", err)
 		}
