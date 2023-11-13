@@ -120,6 +120,9 @@ handle_srh:
 	if (client_get_sid(skb, ipv6, &sidlist_data) < 0)
 		goto pass;
 
+	if (sidlist_data->sidlist_size == 0)
+		goto pass;
+
 	if (add_srh(skb, data, data_end, sidlist_data) < 0)
 		goto drop;
 

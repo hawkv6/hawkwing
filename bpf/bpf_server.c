@@ -85,7 +85,7 @@ int server_egress(struct __sk_buff *skb)
 
 handle_srh:
 	if (server_get_sid(skb, ipv6, &sidlist_data) < 0)
-		goto drop;
+		goto pass;
 
 	if (add_srh(skb, data, data_end, sidlist_data) < 0) {
 		bpf_printk("[server-egress] add_srh failed\n");
