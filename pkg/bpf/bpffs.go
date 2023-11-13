@@ -9,14 +9,23 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-var (
-	BpffsRoot = "/sys/fs/bpf"
-)
+const BpffsRoot = "/sys/fs/bpf"
 
+// MapToPath returns the path to the pinned map with the given name.
+//
+// Parameters:
+//   - name: The name of the map.
+//
+// Returns:
+//   - The path to the pinned map.
 func MapToPath(name string) string {
 	return filepath.Join(BpffsRoot, name)
 }
 
+// Mount mounts the bpf filesystem if it is not already mounted.
+//
+// Returns:
+//   - nil if the bpf filesystem is already mounted or could be mounted.
 func Mount() error {
 	mounted, err := isMounted(BpffsRoot)
 	if err != nil {
