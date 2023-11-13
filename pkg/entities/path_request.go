@@ -22,10 +22,11 @@ func (pr *PathRequest) Marshal() *api.PathRequest {
 	for _, intent := range pr.Intents {
 		intentValues := make([]*api.Value, 0, len(intent.IntentValues))
 		for _, val := range intent.IntentValues {
+			iv := val
 			intentValues = append(intentValues, &api.Value{
 				Type:        api.ValueType(val.IntentValueType),
-				NumberValue: &val.NumberValue,
-				StringValue: &val.StringValue,
+				NumberValue: &iv.NumberValue,
+				StringValue: &iv.StringValue,
 			})
 		}
 		intents = append(intents, &api.Intent{
