@@ -1,0 +1,48 @@
+---
+hawkeye:
+  hostname: fcbb:cc00:5::f
+  port: 5001
+services:
+  service1:
+    domain_name: service1.com
+    applications:
+      - port: 80
+        sid:
+          - fcbb:bb00:1::2
+          - fcbb:bb00:2::2
+        intents:
+          - intent: sfc
+            functions:
+              - function1
+              - function2
+      - port: 8080
+        intents:
+          - intent: flex-algo
+            flex_algo_number: 1
+  service2:
+    domain_name: service2.com
+    applications:
+      - port: 1433
+        sid:
+          - fcbb:bb00:2::2
+          - fcbb:bb00:3::2
+        intents:
+          - intent: high-bandwidth
+            min_value: 1
+            max_value: 2
+  service3:
+    ipv6_addresses:
+      - fcbb:cc00:4::a
+      - fcbb:cc00:4::b
+      - fcbb:cc00:4::c
+    applications:
+      - port: 443
+        intents:
+          - intent: flex-algo
+            flex_algo_number: 1
+          - intent: low-bandwidth
+            min_value: 1
+            max_value: 2
+          - intent: low-latency
+            min_value: 1
+            max_value: 2
