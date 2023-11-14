@@ -44,7 +44,6 @@ func FormatDNSName(domain string) ([256]byte, error) {
 
 	// Append zero byte to indicate end of the domain name
 	result[offset] = 0
-	offset++
 
 	return result, nil
 }

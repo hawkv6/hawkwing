@@ -40,15 +40,18 @@ func (pr *PathRequest) Marshal() *api.PathRequest {
 	}
 }
 
-func CreatePathRequestsForService(serviceKey string) []PathRequest {
+func CreatePathRequestsForService(serviceKey string) ([]PathRequest, error) {
 	serviceCfg := config.Params.Services[serviceKey]
 	pathRequests := make([]PathRequest, 0, len(serviceCfg.Ipv6Addresses))
 	for _, application := range serviceCfg.Applications {
-		applicationIntents := CreateIntentsForServiceApplication(serviceKey, application.Port)
+		applicationIntents, err := CreateIntentsForServiceApplication(serviceKey, application.Port)
+		if err != nil {
+			return nil, err
+		}
 		for _, ipv6Addr := range serviceCfg.Ipv6Addresses {
 			pathRequests = append(pathRequests, NewPathRequest(ipv6Addr, applicationIntents))
 		}
 
 	}
-	return pathRequests
+	return pathRequests, nil
 }

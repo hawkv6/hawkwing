@@ -15,10 +15,6 @@ func NewMessagingAdapter(messagingChannels *MessagingChannels, adapterChannels *
 }
 
 func (a *MessagingAdapter) Start() {
-	a.HandleIntent()
-}
-
-func (a *MessagingAdapter) HandleIntent() {
 	go func() {
 		for {
 			intentRequest := <-a.adapterChannels.ChAdapterIntentRequest
