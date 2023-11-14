@@ -267,4 +267,13 @@ func TestCreateIntentsForServiceApplication(t *testing.T) {
 			}
 		})
 	}
+
+	application0Intent0 := config.Params.Services["service1"].Applications[0].Intents[0]
+	application0Intent0.Intent = "invalid"
+	config.Params.Services["service1"].Applications[0].Intents[0] = application0Intent0
+
+	_, err := CreateIntentsForServiceApplication("service1", 80)
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
 }
