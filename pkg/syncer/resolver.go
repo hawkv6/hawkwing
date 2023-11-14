@@ -56,7 +56,10 @@ func (rs *ResolverService) ProcessConfig(ctx context.Context) error {
 			serviceCfg.Ipv6Addresses = ipv6AddrStrs
 			config.Params.Services[key] = serviceCfg
 
-			pathRequests := entities.CreatePathRequestsForService(key)
+			pathRequests, err := entities.CreatePathRequestsForService(key)
+			if err != nil {
+				return err
+			}
 			for _, pathRequest := range pathRequests {
 				pr := pathRequest
 				rs.reqChan <- &pr

@@ -239,7 +239,10 @@ func TestCreateIntentsForServiceApplication(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			intents := CreateIntentsForServiceApplication(tt.args.serviceKey, tt.args.applicationPort)
+			intents, err := CreateIntentsForServiceApplication(tt.args.serviceKey, tt.args.applicationPort)
+			if err != nil {
+				t.Errorf("Expected no error, got %v", err)
+			}
 			if len(intents) != len(tt.want) {
 				t.Errorf("Expected %d intents, got %d", len(tt.want), len(intents))
 			}

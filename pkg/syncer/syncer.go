@@ -38,7 +38,10 @@ func (s *Syncer) Start() {
 func (s *Syncer) FetchAll() {
 	log.Printf("fetching all needed intent details")
 	for key := range config.Params.Services {
-		pathRequests := entities.CreatePathRequestsForService(key)
+		pathRequests, err := entities.CreatePathRequestsForService(key)
+		if err != nil {
+			log.Fatalf("could not create path requests for service %s: %v", key, err)
+		}
 		for _, pathRequest := range pathRequests {
 			pr := pathRequest
 			s.reqChan <- &pr

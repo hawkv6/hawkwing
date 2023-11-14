@@ -1,7 +1,7 @@
 package entities
 
 import (
-	"log"
+	"fmt"
 
 	"github.com/hawkv6/hawkwing/internal/config"
 	"github.com/hawkv6/hawkwing/pkg/types"
@@ -51,7 +51,7 @@ type Intent struct {
 	IntentValues []IntentValue
 }
 
-func CreateIntentsForServiceApplication(serviceKey string, applicationPort int) []Intent {
+func CreateIntentsForServiceApplication(serviceKey string, applicationPort int) ([]Intent, error) {
 	serviceCfg := config.Params.Services[serviceKey]
 	intents := make([]Intent, 0)
 	for _, application := range serviceCfg.Applications {
@@ -59,7 +59,7 @@ func CreateIntentsForServiceApplication(serviceKey string, applicationPort int) 
 			for _, intent := range application.Intents {
 				intentType, err := types.ParseIntentType(intent.Intent)
 				if err != nil {
-					log.Fatalf("failed to parse intent type %s: %v", intent.Intent, err)
+					return nil, fmt.Errorf("failed to parse intent type %s: %v", intent.Intent, err)
 				}
 				intents = append(intents, Intent{
 					IntentType:   intentType,
@@ -68,5 +68,5 @@ func CreateIntentsForServiceApplication(serviceKey string, applicationPort int) 
 			}
 		}
 	}
-	return intents
+	return intents, nil
 }

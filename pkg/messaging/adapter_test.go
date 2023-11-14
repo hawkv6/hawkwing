@@ -32,7 +32,7 @@ func TestMessagingAdapter_Start(t *testing.T) {
 	ac := NewAdapterChannels()
 	ma := NewMessagingAdapter(mc, ac)
 
-	mockPathRequests := entities.CreatePathRequestsForService("service3")
+	mockPathRequests, _ := entities.CreatePathRequestsForService("service3")
 	fmt.Println(mockPathRequests)
 
 	mockPathResult := api.PathResult{

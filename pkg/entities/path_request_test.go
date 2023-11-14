@@ -248,8 +248,13 @@ func TestCreatePathRequestsForService(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		if got := CreatePathRequestsForService(tt.args.serviceKey); !reflect.DeepEqual(got, tt.want) {
+		if got, err := CreatePathRequestsForService(tt.args.serviceKey); !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("CreatePathRequestsForService() = %v, want %v", got, tt.want)
+		} else if err != nil {
+			t.Errorf("CreatePathRequestsForService() = %v", err)
 		}
+		// if got, err := CreatePathRequestsForService(tt.args.serviceKey); !reflect.DeepEqual(got, tt.want) {
+		// 	t.Errorf("CreatePathRequestsForService() = %v, want %v", got, tt.want)
+		// }
 	}
 }
