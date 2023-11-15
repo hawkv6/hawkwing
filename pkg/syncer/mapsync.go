@@ -28,8 +28,10 @@ func (s *Syncer) storeSidList(intentResponse *entities.PathResult) error {
 	}
 
 	portToUpdate := s.getApplicationPortToUpdate(intentResponse)
-	sidListData := maps.GenerateSidLookupValue(intentResponse.Ipv6SidAddresses)
-
+	sidListData, err := maps.GenerateSidLookupValue(intentResponse.Ipv6SidAddresses)
+	if err != nil {
+		return fmt.Errorf("could not generate sid lookup value: %s", err)
+	}
 	err = s.cm.Outer.UpdateInner(innerMapId, uint16(portToUpdate), sidListData)
 	if err != nil {
 		return fmt.Errorf("could not update inner map: %s", err)

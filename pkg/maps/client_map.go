@@ -32,7 +32,10 @@ func NewClientMap() (*ClientMap, error) {
 }
 
 func (cm *ClientMap) Create() error {
-	innerSpecs := cm.clientInnerMapSpecs()
+	innerSpecs, err := cm.clientInnerMapSpecs()
+	if err != nil {
+		return fmt.Errorf("could not create inner map specs: %s", err)
+	}
 	i := 0
 	for key, spec := range innerSpecs {
 		inner := NewInnerMap(spec)
@@ -56,14 +59,17 @@ func (cm *ClientMap) BuildClientDataMap() error {
 	return nil
 }
 
-func (cm *ClientMap) clientInnerMapSpecs() map[string]*ebpf.MapSpec {
+func (cm *ClientMap) clientInnerMapSpecs() (map[string]*ebpf.MapSpec, error) {
 	innerMapSpecs := make(map[string]*ebpf.MapSpec)
 	for key, serviceCfg := range config.Params.Services {
 		innerMapSpec := cm.Outer.spec.InnerMap.Copy()
 		innerMapSpec.Name = fmt.Sprintf("%s_%s", "client_inner", key)
 		innerMapSpec.Contents = make([]ebpf.MapKV, len(serviceCfg.Applications))
 		for i, application := range serviceCfg.Applications {
-			value := GenerateSidLookupValue(application.Sid)
+			value, err := GenerateSidLookupValue(application.Sid)
+			if err != nil {
+				return nil, fmt.Errorf("could not generate SID lookup value: %s", err)
+			}
 			innerMapSpec.Contents[uint32(i)] = ebpf.MapKV{
 				Key:   uint16(application.Port),
 				Value: value,
@@ -71,5 +77,5 @@ func (cm *ClientMap) clientInnerMapSpecs() map[string]*ebpf.MapSpec {
 		}
 		innerMapSpecs[key] = innerMapSpec
 	}
-	return innerMapSpecs
+	return innerMapSpecs, nil
 }
