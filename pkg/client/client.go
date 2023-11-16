@@ -38,7 +38,8 @@ func NewClient(interfaceName string) (*Client, error) {
 		return nil, fmt.Errorf("could not lookup network iface %q: %s", interfaceName, err)
 	}
 
-	clientObjs, err := client.ReadClientBpfObjects()
+	realClientBpfReader := &client.RealClientBpfReader{}
+	clientObjs, err := realClientBpfReader.ReadClientBpfObjects()
 	if err != nil {
 		return nil, fmt.Errorf("could not load client BPF objects: %s", err)
 	}
@@ -51,7 +52,8 @@ func NewClient(interfaceName string) (*Client, error) {
 		return nil, fmt.Errorf("could not mount BPF filesystem: %s", err)
 	}
 
-	clientMap, err := maps.NewClientMap()
+	realBpf := &bpf.RealBpf{}
+	clientMap, err := maps.NewClientMap(realBpf, realClientBpfReader)
 	if err != nil {
 		return nil, fmt.Errorf("could not create client map: %s", err)
 	}

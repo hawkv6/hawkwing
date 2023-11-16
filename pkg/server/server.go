@@ -44,7 +44,8 @@ func NewServer(interfaceName string) (*Server, error) {
 		return nil, fmt.Errorf("could not mount BPF filesystem: %s", err)
 	}
 
-	serverMap, err := maps.NewServerMap()
+	realBpf := &bpf.RealBpf{}
+	serverMap, err := maps.NewServerMap(realBpf)
 	if err != nil {
 		return nil, fmt.Errorf("could not create server map: %s", err)
 	}

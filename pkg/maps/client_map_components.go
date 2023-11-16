@@ -5,6 +5,7 @@ import (
 
 	"github.com/cilium/ebpf"
 	"github.com/hawkv6/hawkwing/internal/config"
+	"github.com/hawkv6/hawkwing/pkg/bpf"
 )
 
 type InnerMap struct {
@@ -12,9 +13,10 @@ type InnerMap struct {
 	ID int
 }
 
-func NewInnerMap(spec *ebpf.MapSpec) *InnerMap {
+func NewInnerMap(bpf bpf.Bpf, spec *ebpf.MapSpec) *InnerMap {
 	return &InnerMap{
 		Map: Map{
+			bpf:  bpf,
 			spec: spec,
 		},
 	}
@@ -33,14 +35,20 @@ type OuterMap struct {
 	Map
 }
 
-func NewOuterMap(spec *ebpf.MapSpec) *OuterMap {
-	return &OuterMap{Map: Map{spec: spec}}
+func NewOuterMap(bpf bpf.Bpf, spec *ebpf.MapSpec) *OuterMap {
+	return &OuterMap{
+		Map: Map{
+			bpf:  bpf,
+			spec: spec,
+		},
+	}
 }
 
 func (om *OuterMap) BuildWith(inners map[string]*InnerMap) error {
 	outerContents := []ebpf.MapKV{}
 	for _, inner := range inners {
-		innerMap, err := ebpf.NewMap(inner.spec)
+		// innerMap, err := ebpf.NewMap(inner.spec)
+		innerMap, err := inner.Map.bpf.CreateMap(inner.spec, "")
 		if err != nil {
 			return fmt.Errorf("could not create inner map: %s", err)
 		}
@@ -61,9 +69,12 @@ type LookupMap struct {
 	Map
 }
 
-func NewLookupMap(spec *ebpf.MapSpec) *LookupMap {
+func NewLookupMap(bpf bpf.Bpf, spec *ebpf.MapSpec) *LookupMap {
 	return &LookupMap{
-		Map: Map{spec: spec},
+		Map: Map{
+			bpf:  bpf,
+			spec: spec,
+		},
 	}
 }
 
@@ -94,9 +105,12 @@ type ReverseMap struct {
 	Map
 }
 
-func NewReverseMap(spec *ebpf.MapSpec) *ReverseMap {
+func NewReverseMap(bpf bpf.Bpf, spec *ebpf.MapSpec) *ReverseMap {
 	return &ReverseMap{
-		Map: Map{spec: spec},
+		Map: Map{
+			bpf:  bpf,
+			spec: spec,
+		},
 	}
 }
 

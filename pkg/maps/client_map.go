@@ -5,18 +5,21 @@ import (
 
 	"github.com/cilium/ebpf"
 	"github.com/hawkv6/hawkwing/internal/config"
+	"github.com/hawkv6/hawkwing/pkg/bpf"
 	"github.com/hawkv6/hawkwing/pkg/bpf/client"
 )
 
 type ClientMap struct {
-	Outer   *OuterMap
-	Inners  map[string]*InnerMap
-	Lookup  *LookupMap
-	Reverse *ReverseMap
+	bpf       bpf.Bpf
+	bpfReader client.ClientBpfReader
+	Outer     *OuterMap
+	Inners    map[string]*InnerMap
+	Lookup    *LookupMap
+	Reverse   *ReverseMap
 }
 
-func NewClientMap() (*ClientMap, error) {
-	clientElfSpec, err := client.ReadClientBpfSpecs()
+func NewClientMap(bpf bpf.Bpf, bpfReader client.ClientBpfReader) (*ClientMap, error) {
+	clientElfSpec, err := bpfReader.ReadClientBpfSpecs()
 	if err != nil {
 		return nil, fmt.Errorf("could not load client BPF specs: %s", err)
 	}
@@ -24,10 +27,12 @@ func NewClientMap() (*ClientMap, error) {
 	lookupMapSpec := clientElfSpec.Maps["client_lookup_map"]
 	reverseMapSpec := clientElfSpec.Maps["client_reverse_map"]
 	return &ClientMap{
-		Outer:   NewOuterMap(outerMapSpec),
-		Inners:  make(map[string]*InnerMap),
-		Lookup:  NewLookupMap(lookupMapSpec),
-		Reverse: NewReverseMap(reverseMapSpec),
+		bpf:       bpf,
+		bpfReader: bpfReader,
+		Outer:     NewOuterMap(bpf, outerMapSpec),
+		Inners:    make(map[string]*InnerMap),
+		Lookup:    NewLookupMap(bpf, lookupMapSpec),
+		Reverse:   NewReverseMap(bpf, reverseMapSpec),
 	}, nil
 }
 
@@ -38,7 +43,7 @@ func (cm *ClientMap) Create() error {
 	}
 	i := 0
 	for key, spec := range innerSpecs {
-		inner := NewInnerMap(spec)
+		inner := NewInnerMap(cm.bpf, spec)
 		inner.ID = i
 		cm.Inners[key] = inner
 		i++
