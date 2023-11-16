@@ -1,0 +1,4 @@
+ignore:
+  - "**/*.pb.go"
+  - "**/*_bpfeb.go"
+  - "**/*_bpfel.go"
