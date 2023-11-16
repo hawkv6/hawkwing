@@ -27,17 +27,24 @@ func (s *Syncer) storeSidList(intentResponse *entities.PathResult) error {
 		return fmt.Errorf("could not find a value in the reverse map for %s: %s", intentResponse.Ipv6DestinationAddress, err)
 	}
 
-	portToUpdate := s.getApplicationPortToUpdate(intentResponse)
-	sidListData := maps.GenerateSidLookupValue(intentResponse.Ipv6SidAddresses)
-
-	err = s.cm.Outer.UpdateInner(innerMapId, uint16(portToUpdate), sidListData)
+	portsToUpdate := s.getApplicationPortsToUpdate(intentResponse)
+	sidListData, err := maps.GenerateSidLookupValue(intentResponse.Ipv6SidAddresses)
 	if err != nil {
-		return fmt.Errorf("could not update inner map: %s", err)
+		return fmt.Errorf("could not generate sid lookup value: %s", err)
 	}
+
+	for _, portToUpdate := range portsToUpdate {
+		err = s.cm.Outer.UpdateInner(innerMapId, uint16(portToUpdate), sidListData)
+		if err != nil {
+			return fmt.Errorf("could not update inner map: %s", err)
+		}
+		log.Infof("stored result for %s and port %d", intentResponse.Ipv6DestinationAddress, portToUpdate)
+	}
+
 	return nil
 }
 
-// getApplicationPortToUpdate returns the port of the application that needs to
+// getApplicationPortsToUpdate returns the ports of the application that needs to
 // be updated based on the intent result.
 //
 // Parameters:
@@ -45,24 +52,24 @@ func (s *Syncer) storeSidList(intentResponse *entities.PathResult) error {
 //     satisfied.
 //
 // Returns:
-//   - The port of the application that needs to be updated.
-func (s *Syncer) getApplicationPortToUpdate(intentResult *entities.PathResult) int {
+//   - The ports of the application that needs to be updated.
+func (s *Syncer) getApplicationPortsToUpdate(intentResult *entities.PathResult) []int {
 	configIntents := s.getApplicationConfigIntents(intentResult)
 	resultIntents := s.getApplicationResultIntents(intentResult)
-
+	var ports []int
 	for _, services := range config.Params.Services {
 		if slices.Contains(services.Ipv6Addresses, intentResult.Ipv6DestinationAddress) {
 			for _, application := range services.Applications {
 				for _, ri := range resultIntents {
 					if slices.Contains(configIntents, ri) {
-						return application.Port
+						ports = append(ports, application.Port)
 					}
 				}
 			}
 		}
 	}
 
-	return 0
+	return ports
 }
 
 // getApplicationResultIntents returns the intents that were satisfied in the
