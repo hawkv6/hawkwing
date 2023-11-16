@@ -36,15 +36,6 @@ func FormatDNSName(domain string) ([256]byte, error) {
 	}
 
 	for _, label := range labels {
-		labelLen := len(label)
-		if labelLen == 0 || labelLen > 63 {
-			return result, fmt.Errorf("invalid label length: %v", labelLen)
-		}
-
-		if offset+labelLen+1 > 255 {
-			return result, fmt.Errorf("domain name too long")
-		}
-
 		result[offset] = byte(len(label))
 		offset++
 
@@ -97,9 +88,6 @@ func SidToInet6Sid(sidList []string) ([10]struct{ In6U struct{ U6Addr8 [16]uint8
 
 	// Leave [0] empty, start from 1
 	for i, sid := range sidList {
-		if i >= 9 {
-			break // Max 9 addresses plus the empty one
-		}
 		ipv6 := net.ParseIP(sid)
 		// Reverse the order of the input list while inserting into the result
 		copy(result[len(sidList)-i].In6U.U6Addr8[:], ipv6.To16())
