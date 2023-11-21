@@ -57,9 +57,10 @@ func (c *MessagingClient) manageStreams() {
 		ctx, cancel := context.WithCancel(context.Background())
 		stream, err := c.IntentControllerClient.GetIntentPath(ctx)
 		if err != nil {
-			log.Printf("failed to get intent path: %v, retrying...", err)
-			c.streamErrors <- err
-			continue
+			log.Fatalf("failed to get intent path: %v", err)
+			// log.Printf("failed to get intent path: %v, retrying...", err)
+			// c.streamErrors <- err
+			// continue
 		}
 
 		go c.handleGetIntentPathRequests(ctx, stream)
@@ -69,7 +70,6 @@ func (c *MessagingClient) manageStreams() {
 		cancel()
 
 		log.Fatalf("stream error: %v", err)
-		// log.WithError(err).Errorf("stream error")
 	}
 }
 
