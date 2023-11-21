@@ -9,6 +9,7 @@ require (
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.16.0
 	github.com/vishvananda/netlink v1.1.0
+	go.uber.org/mock v0.3.0
 	golang.org/x/sys v0.13.0
 	google.golang.org/grpc v1.56.3
 	google.golang.org/protobuf v1.30.0

@@ -9,6 +9,11 @@ import (
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc $BPF_CLANG -cflags $BPF_CFLAGS client ../../../bpf/bpf_client.c -- -I../../../bpf
 
+type ClientBpfReader interface {
+	ReadClientBpfObjects() (*clientObjects, error)
+	ReadClientBpfSpecs() (*ebpf.CollectionSpec, error)
+}
+
 type RealClientBpfReader struct{}
 
 func (r *RealClientBpfReader) ReadClientBpfObjects() (*clientObjects, error) {

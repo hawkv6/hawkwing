@@ -23,7 +23,7 @@ func NewInnerMap(bpf bpf.Bpf, spec *ebpf.MapSpec) *InnerMap {
 }
 
 func (im *InnerMap) Build() error {
-	mapInstance, err := ebpf.NewMap(im.spec)
+	mapInstance, err := im.bpf.CreateMap(im.spec, "")
 	if err != nil {
 		return fmt.Errorf("could not create inner map: %s", err)
 	}
