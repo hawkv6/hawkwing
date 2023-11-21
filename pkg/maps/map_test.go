@@ -122,6 +122,14 @@ func TestOpen(t *testing.T) {
 				mockBpf.EXPECT().LoadPinnedMap("/sys/fs/bpf").Return(nil, fmt.Errorf("error"))
 			},
 		},
+		{
+			name:    "no error",
+			args:    args{path: "/sys/fs/bpf"},
+			wantErr: false,
+			mockBpf: func() {
+				mockBpf.EXPECT().LoadPinnedMap("/sys/fs/bpf").Return(nil, nil)
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -151,36 +159,30 @@ func TestLookup(t *testing.T) {
 		mockBpf func()
 	}{
 		{
-			name:    "key is nil",
-			args:    args{key: nil, value: nil},
-			wantErr: true,
-			mockBpf: func() {
-				mockBpf.EXPECT().LoadPinnedMap("").Return(nil, fmt.Errorf("error"))
-			},
-		},
-		{
-			name:    "value is nil",
-			args:    args{key: &ebpf.Map{}, value: nil},
-			wantErr: true,
-			mockBpf: func() {
-				mockBpf.EXPECT().LoadPinnedMap("").Return(nil, fmt.Errorf("error"))
-			},
-		},
-		{
-			name:    "path is empty",
-			args:    args{key: &ebpf.Map{}, value: &ebpf.Map{}},
-			wantErr: true,
-			mockBpf: func() {
-				mockBpf.EXPECT().LoadPinnedMap("").Return(nil, fmt.Errorf("error"))
-			},
-		},
-		{
 			name: "open returns error",
 			args: args{key: &ebpf.Map{}, value: &ebpf.Map{}},
 			mockBpf: func() {
 				mockBpf.EXPECT().LoadPinnedMap("").Return(nil, fmt.Errorf("error"))
 			},
 			wantErr: true,
+		},
+		{
+			name: "lookup fails",
+			args: args{key: &ebpf.Map{}, value: &ebpf.Map{}},
+			mockBpf: func() {
+				mockBpf.EXPECT().LoadPinnedMap("").Return(nil, nil)
+				mockBpf.EXPECT().LookupMap(gomock.Any(), gomock.Any(), gomock.Any()).Return(fmt.Errorf("error"))
+			},
+			wantErr: true,
+		},
+		{
+			name: "no error",
+			args: args{key: &ebpf.Map{}, value: &ebpf.Map{}},
+			mockBpf: func() {
+				mockBpf.EXPECT().LoadPinnedMap("").Return(nil, nil)
+				mockBpf.EXPECT().LookupMap(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
@@ -237,6 +239,16 @@ func TestUpdateInner(t *testing.T) {
 				mockBpf.EXPECT().PutMap(gomock.Any(), gomock.Any(), gomock.Any()).Return(fmt.Errorf("error"))
 			},
 			wantErr: true,
+		},
+		{
+			name: "no error",
+			args: args{outerKey: &ebpf.Map{}, innerKey: &ebpf.Map{}, innerValue: &ebpf.Map{}},
+			mockBpf: func() {
+				mockBpf.EXPECT().LookupMap(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+				mockBpf.EXPECT().LoadMapFromId(gomock.Any()).Return(nil, nil)
+				mockBpf.EXPECT().PutMap(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil)
+			},
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
