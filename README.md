@@ -14,17 +14,6 @@ HawkWing is a versatile tool that operates in both client and server modes, offe
 HawkWing's development environment is crafted using VPP (Vector Packet Processing) and Linux namespaces. This setup was chosen for its robustness and flexibility, allowing for seamless development and testing directly on the server within isolated namespaces. The development environment is depicted in the figure below.
 ![Development Network](docs/network.png)
 
-## Configuration
-The configuration possibilities of HawkWing are the key to its versatility. The configuration file is written in YAML and consists of a structured list of settings. The configuration possibliities are described in the table below.
-
-| Name | Description | Value |
-| --- | --- | --- |
-| `hawkeye` | The configuration for the HawkEye server. | |
-| `hawkeye.address` | The IPv6 address of the HawkEye server. | |
-| `hawkeye.port` | The port of the HawkEye server. | 0 |
-| `services` | The configuration for the services. | |
-| `services.name` | The name of the service. |
-
 ## Configuration Structure
 
 The Hawkwing configuration is structured as follows:
