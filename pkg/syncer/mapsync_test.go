@@ -188,14 +188,7 @@ func TestSyncer_getApplicationPortsToUpdate(t *testing.T) {
 
 func TestSyncer_storeSidList(t *testing.T) {
 	test.SetupTestConfig(t)
-	ctrl := gomock.NewController(t)
-	mockBpf := bpf.NewMockBpf(ctrl)
-	mockBpfReader := client.NewMockClientBpfReader(ctrl)
-	mockBpfReader.EXPECT().ReadClientBpfSpecs().Return(&test.MockClientCollectionSpec, nil)
-	clientMap, err := maps.NewClientMap(mockBpf, mockBpfReader)
-	if err != nil {
-		t.Fatalf("could not create client map: %v", err)
-	}
+
 	pathResult := &entities.PathResult{
 		Ipv6DestinationAddress: "fcbb:cc00:4::a",
 		Intents: []entities.Intent{
@@ -229,75 +222,91 @@ func TestSyncer_storeSidList(t *testing.T) {
 		},
 	}
 
-	type args struct {
-		intentResponse *entities.PathResult
-	}
 	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-		mockBpf func()
+		name     string
+		args     *entities.PathResult
+		testFunc func(*Syncer, *bpf.MockBpf, *client.MockClientBpfReader)
 	}{
 		{
 			name: "Lookup returns error",
-			args: args{
-				intentResponse: pathResult,
-			},
-			wantErr: true,
-			mockBpf: func() {
+			args: pathResult,
+			testFunc: func(syncer *Syncer, mockBpf *bpf.MockBpf, mockBpfReader *client.MockClientBpfReader) {
 				mockBpf.EXPECT().LoadPinnedMap(gomock.Any()).Return(&ebpf.Map{}, nil).AnyTimes()
 				mockBpf.EXPECT().LookupMap(gomock.Any(), gomock.Any(), gomock.Any()).Return(fmt.Errorf("error")).AnyTimes()
+
+				err := syncer.storeSidList(pathResult)
+				if err == nil {
+					t.Errorf("storeSidList() = want %v, got %v", "error", "nil")
+				}
 			},
 		},
 		{
 			name: "Generate sidlookup value returns error",
-			args: args{
-				intentResponse: pathResult,
-			},
-			wantErr: true,
-			mockBpf: func() {
+			args: pathResult,
+			testFunc: func(syncer *Syncer, mockBpf *bpf.MockBpf, mockBpfReader *client.MockClientBpfReader) {
 				pathResult.Ipv6SidAddresses = []string{"2001:db8::1", "2001:db8::2", "2001:db8::3", "2001:db8::4", "2001:db8::5", "2001:db8::6", "2001:db8::7", "2001:db8::8", "2001:db8::9", "2001:db8::a", "2001:db8::b"}
 				mockBpf.EXPECT().LoadPinnedMap(gomock.Any()).Return(&ebpf.Map{}, nil).AnyTimes()
 				mockBpf.EXPECT().LookupMap(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+				err := syncer.storeSidList(pathResult)
+				if err == nil {
+					t.Errorf("storeSidList() = want %v, got %v", "error", "nil")
+				}
 			},
 		},
 		{
 			name: "UpdateInner returns error",
-			args: args{
-				intentResponse: pathResult,
-			},
-			wantErr: true,
-			mockBpf: func() {
+			args: pathResult,
+			testFunc: func(syncer *Syncer, mockBpf *bpf.MockBpf, mockBpfReader *client.MockClientBpfReader) {
+				pathResult.Ipv6SidAddresses = []string{"2001:db8::1", "2001:db8::2", "2001:db8::3"}
 				mockBpf.EXPECT().LoadPinnedMap(gomock.Any()).Return(&ebpf.Map{}, nil).AnyTimes()
 				mockBpf.EXPECT().LookupMap(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 				mockBpf.EXPECT().LoadMapFromId(gomock.Any()).Return(nil, fmt.Errorf("error")).AnyTimes()
+
+				err := syncer.storeSidList(pathResult)
+				if err == nil {
+					t.Errorf("storeSidList() = want %v, got %v", "error", "nil")
+				}
 			},
 		},
 		{
 			name: "No error",
-			args: args{
-				intentResponse: pathResult,
-			},
-			wantErr: true,
-			mockBpf: func() {
+			args: pathResult,
+			testFunc: func(syncer *Syncer, mockBpf *bpf.MockBpf, mockBpfReader *client.MockClientBpfReader) {
+				pathResult.Ipv6SidAddresses = []string{"2001:db8::1", "2001:db8::2", "2001:db8::3"}
 				mockBpf.EXPECT().LoadPinnedMap(gomock.Any()).Return(&ebpf.Map{}, nil).AnyTimes()
 				mockBpf.EXPECT().LookupMap(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
 				mockBpf.EXPECT().LoadMapFromId(gomock.Any()).Return(nil, nil).AnyTimes()
+				mockBpf.EXPECT().PutMap(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+
+				err := syncer.storeSidList(pathResult)
+				if err != nil {
+					t.Errorf("storeSidList() = want %v, got %v", "nil", err)
+				}
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.mockBpf()
-			s := &Syncer{
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockBpf := bpf.NewMockBpf(ctrl)
+			mockBpfReader := client.NewMockClientBpfReader(ctrl)
+			mockBpfReader.EXPECT().ReadClientBpfSpecs().Return(&test.MockClientCollectionSpec, nil).AnyTimes()
+
+			clientMap, err := maps.NewClientMap(mockBpf, mockBpfReader)
+			if err != nil {
+				t.Fatalf("could not create client map: %v", err)
+			}
+
+			syncer := &Syncer{
 				bpf: mockBpf,
 				cm:  clientMap,
 			}
-			if err := s.storeSidList(tt.args.intentResponse); (err != nil) != tt.wantErr {
-				t.Errorf("storeSidList() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			ctrl.Finish()
+
+			tt.testFunc(syncer, mockBpf, mockBpfReader)
 		})
 	}
 }
