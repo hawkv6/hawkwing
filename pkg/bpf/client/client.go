@@ -9,7 +9,14 @@ import (
 
 //go:generate go run github.com/cilium/ebpf/cmd/bpf2go -cc $BPF_CLANG -cflags $BPF_CFLAGS client ../../../bpf/bpf_client.c -- -I../../../bpf
 
-func ReadClientBpfObjects() (*clientObjects, error) {
+type ClientBpfReader interface {
+	ReadClientBpfObjects() (*clientObjects, error)
+	ReadClientBpfSpecs() (*ebpf.CollectionSpec, error)
+}
+
+type RealClientBpfReader struct{}
+
+func (r *RealClientBpfReader) ReadClientBpfObjects() (*clientObjects, error) {
 	obj := &clientObjects{}
 	ops := &ebpf.CollectionOptions{
 		Maps: ebpf.MapOptions{
@@ -23,7 +30,7 @@ func ReadClientBpfObjects() (*clientObjects, error) {
 	return obj, nil
 }
 
-func ReadClientBpfSpecs() (*ebpf.CollectionSpec, error) {
+func (r *RealClientBpfReader) ReadClientBpfSpecs() (*ebpf.CollectionSpec, error) {
 	specs, err := loadClient()
 	if err != nil {
 		return nil, fmt.Errorf("could not load client BPF collection: %s", err)

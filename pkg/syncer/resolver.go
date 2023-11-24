@@ -9,8 +9,12 @@ import (
 	"github.com/hawkv6/hawkwing/pkg/entities"
 )
 
+type DNSResolver interface {
+	LookupIPAddr(ctx context.Context, host string) ([]net.IPAddr, error)
+}
+
 type ResolverService struct {
-	dNSResolver *net.Resolver
+	dNSResolver DNSResolver
 	cache       map[string][]net.IPAddr
 	cacheTTL    map[string]time.Time
 	reqChan     chan *entities.PathRequest

@@ -1,6 +1,14 @@
 package messaging
 
-import "testing"
+import (
+	"fmt"
+	"io"
+	"testing"
+	"time"
+
+	"github.com/hawkv6/hawkwing/pkg/api"
+	"go.uber.org/mock/gomock"
+)
 
 func TestNewMessagingClient(t *testing.T) {
 	mc := NewMessagingChannels()
@@ -10,5 +18,153 @@ func TestNewMessagingClient(t *testing.T) {
 	}
 	if m.messagingChannels != mc {
 		t.Errorf("NewMessagingClient() = %v, want %v", m.messagingChannels, mc)
+	}
+}
+
+func TestMessagingClient_manageStreams(t *testing.T) {
+	mc := NewMessagingChannels()
+	ctrl := gomock.NewController(t)
+	mockClient := api.NewMockIntentControllerClient(ctrl)
+	messagingClient := &MessagingClient{
+		IntentControllerClient: mockClient,
+		messagingChannels:      mc,
+		streamErrors:           make(chan error),
+		ErrCh:                  make(chan error),
+	}
+	mockStream := api.NewMockIntentController_GetIntentPathClient(ctrl)
+	mockGrpcStreamCh := make(chan *api.PathRequest)
+
+	tests := []struct {
+		name     string
+		testFunc func()
+	}{
+		{
+			name: "GetIntentPath returns no stream",
+			testFunc: func() {
+				mockClient.EXPECT().GetIntentPath(gomock.Any()).Return(nil, fmt.Errorf("error")).AnyTimes()
+
+				go messagingClient.manageStreams()
+
+				select {
+				case <-messagingClient.ErrCh:
+				case <-time.After(time.Second * 5):
+					t.Errorf("manageStreams() = want %v, got %v", "message in messagingClient.ErrCh", "no message in messagingClient.ErrCh")
+				}
+			},
+		},
+		{
+			name: "send returns error",
+			testFunc: func() {
+				mockClient.EXPECT().GetIntentPath(gomock.Any()).Return(mockStream, nil).AnyTimes()
+
+				mockStream.EXPECT().
+					Send(gomock.Any()).
+					DoAndReturn(func(msg *api.PathRequest) error {
+						mockGrpcStreamCh <- msg
+						return fmt.Errorf("error")
+					}).
+					AnyTimes()
+
+				mockStream.EXPECT().
+					Recv().
+					DoAndReturn(func() (*api.PathResult, error) {
+						select {
+						case <-mockGrpcStreamCh:
+							return &api.PathResult{}, nil
+						case <-time.After(time.Second * 5):
+							return nil, io.EOF
+						}
+					}).
+					AnyTimes()
+
+				go messagingClient.manageStreams()
+				mc.ChMessageIntentRequest <- &api.PathRequest{}
+				select {
+				case <-messagingClient.ErrCh:
+				case <-time.After(time.Second * 5):
+					t.Errorf("manageStreams() = want %v, got %v", "message in messagingClient.ErrCh", "no message in messagingClient.ErrCh")
+				}
+			},
+		},
+		{
+			name: "receive returns error",
+			testFunc: func() {
+				mockClient.EXPECT().GetIntentPath(gomock.Any()).Return(mockStream, nil).AnyTimes()
+
+				mockStream.EXPECT().
+					Send(gomock.Any()).
+					DoAndReturn(func(msg *api.PathRequest) error {
+						mockGrpcStreamCh <- msg
+						return nil
+					}).
+					AnyTimes()
+
+				mockStream.EXPECT().
+					Recv().
+					DoAndReturn(func() (*api.PathResult, error) {
+						select {
+						case <-mockGrpcStreamCh:
+							return &api.PathResult{}, fmt.Errorf("error")
+						case <-time.After(time.Second * 5):
+							return nil, io.EOF
+						}
+					}).
+					AnyTimes()
+
+				go messagingClient.manageStreams()
+				mc.ChMessageIntentRequest <- &api.PathRequest{}
+			},
+		},
+		{
+			name: "no error",
+			testFunc: func() {
+				mockClient.EXPECT().GetIntentPath(gomock.Any()).Return(mockStream, nil).AnyTimes()
+
+				mockStream.EXPECT().
+					Send(gomock.Any()).
+					DoAndReturn(func(msg *api.PathRequest) error {
+						mockGrpcStreamCh <- msg
+						return nil
+					}).
+					AnyTimes()
+
+				mockStream.EXPECT().
+					Recv().
+					DoAndReturn(func() (*api.PathResult, error) {
+						select {
+						case <-mockGrpcStreamCh:
+							return &api.PathResult{}, nil
+						case <-time.After(time.Second * 5):
+							return nil, io.EOF
+						}
+					}).
+					AnyTimes()
+
+				go messagingClient.manageStreams()
+				mc.ChMessageIntentRequest <- &api.PathRequest{}
+
+				select {
+				case <-mc.ChMessageIntentResponse:
+				case <-time.After(time.Second * 5):
+					t.Errorf("manageStreams() = want %v, got %v", "message in mc.ChMessageIntentResponse", "no message in mc.ChMessageIntentResponse")
+				}
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.testFunc()
+			ctrl.Finish()
+			ctrl = gomock.NewController(t)
+			mockClient = api.NewMockIntentControllerClient(ctrl)
+			mockStream = api.NewMockIntentController_GetIntentPathClient(ctrl)
+			messagingClient = &MessagingClient{
+				IntentControllerClient: mockClient,
+				messagingChannels:      mc,
+				streamErrors:           make(chan error),
+				ErrCh:                  make(chan error),
+			}
+		})
 	}
 }

@@ -1,4 +1,7 @@
 ignore:
+  - "**/bpf/*.go"
+  - "**/linker/*.go"
   - "**/*.pb.go"
   - "**/*_bpfeb.go"
   - "**/*_bpfel.go"
+  - "**/*_mock.go"

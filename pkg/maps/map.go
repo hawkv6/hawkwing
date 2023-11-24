@@ -9,14 +9,18 @@ import (
 )
 
 type Map struct {
+	bpf  bpf.Bpf
 	spec *ebpf.MapSpec
 	m    *ebpf.Map
 	lock sync.RWMutex
 	path string
 }
 
-func NewMap(spec *ebpf.MapSpec) *Map {
-	return &Map{spec: spec}
+func NewMap(bpf bpf.Bpf, spec *ebpf.MapSpec) *Map {
+	return &Map{
+		bpf:  bpf,
+		spec: spec,
+	}
 }
 
 // OpenOrCreate opens or creates the map.
@@ -45,7 +49,7 @@ func (m *Map) openOrCreate(pin bool) error {
 		m.spec.Pinning = ebpf.PinByName
 	}
 
-	em, err := bpf.CreateMap(m.spec, m.path)
+	em, err := m.bpf.CreateMap(m.spec, m.path)
 	if err != nil {
 		return err
 	}
@@ -71,7 +75,7 @@ func (m *Map) open() error {
 		return nil
 	}
 
-	em, err := ebpf.LoadPinnedMap(m.path, nil)
+	em, err := m.bpf.LoadPinnedMap(m.path)
 	if err != nil {
 		return fmt.Errorf("failed to load pinned map: %w", err)
 	}
@@ -103,7 +107,7 @@ func (m *Map) Lookup(key interface{}, value interface{}) error {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
 
-	err := m.m.Lookup(key, value)
+	err := m.bpf.LookupMap(m.m, key, value)
 	if err != nil {
 		return fmt.Errorf("failed to lookup map %s: %w", m.spec.Name, err)
 	}
@@ -128,17 +132,17 @@ func (m *Map) UpdateInner(outerKey interface{}, innerKey interface{}, innerValue
 	defer m.lock.Unlock()
 
 	var innerMapID ebpf.MapID
-	err = m.m.Lookup(outerKey, &innerMapID)
+	err = m.bpf.LookupMap(m.m, outerKey, &innerMapID)
 	if err != nil {
 		return fmt.Errorf("could not find inner map in outer map: %s", err)
 	}
 
-	innerMap, err := ebpf.NewMapFromID(innerMapID)
+	innerMap, err := m.bpf.LoadMapFromId(innerMapID)
 	if err != nil {
 		return fmt.Errorf("could not create inner map from ID: %s", err)
 	}
 
-	err = innerMap.Put(innerKey, innerValue)
+	err = m.bpf.PutMap(innerMap, innerKey, innerValue)
 	if err != nil {
 		return fmt.Errorf("could not update inner map: %s", err)
 	}

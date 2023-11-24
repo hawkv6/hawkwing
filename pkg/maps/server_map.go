@@ -3,14 +3,16 @@ package maps
 import (
 	"fmt"
 
+	"github.com/hawkv6/hawkwing/pkg/bpf"
 	"github.com/hawkv6/hawkwing/pkg/bpf/server"
 )
 
 type ServerMap struct {
+	bpf    bpf.Bpf
 	Lookup *Map
 }
 
-func NewServerMap() (*ServerMap, error) {
+func NewServerMap(bpf bpf.Bpf) (*ServerMap, error) {
 	collSpec, err := server.ReadServerBpfSpecs()
 	if err != nil {
 		return nil, fmt.Errorf("could not load server BPF specs: %s", err)
@@ -18,7 +20,8 @@ func NewServerMap() (*ServerMap, error) {
 
 	lookupMapSpec := collSpec.Maps["server_lookup_map"]
 	return &ServerMap{
-		Lookup: NewMap(lookupMapSpec),
+		bpf:    bpf,
+		Lookup: NewMap(bpf, lookupMapSpec),
 	}, nil
 }
 

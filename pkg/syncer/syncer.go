@@ -2,6 +2,7 @@ package syncer
 
 import (
 	"github.com/hawkv6/hawkwing/internal/config"
+	"github.com/hawkv6/hawkwing/pkg/bpf"
 	"github.com/hawkv6/hawkwing/pkg/entities"
 	"github.com/hawkv6/hawkwing/pkg/logging"
 	"github.com/hawkv6/hawkwing/pkg/maps"
@@ -13,19 +14,23 @@ var log = logging.DefaultLogger.WithField("subsystem", Subsystem)
 const Subsystem = "go-syncer"
 
 type Syncer struct {
+	bpf             bpf.Bpf
 	adapterChannels *messaging.AdapterChannels
 	cm              *maps.ClientMap
 	reqChan         chan *entities.PathRequest
 	resolver        *ResolverService
+	ErrCh           chan error
 }
 
-func NewSyncer(adapterChannels *messaging.AdapterChannels, cm *maps.ClientMap) *Syncer {
+func NewSyncer(bpf bpf.Bpf, adapterChannels *messaging.AdapterChannels, cm *maps.ClientMap) *Syncer {
 	reqChan := make(chan *entities.PathRequest)
 	return &Syncer{
+		bpf:             bpf,
 		adapterChannels: adapterChannels,
 		cm:              cm,
 		reqChan:         reqChan,
 		resolver:        NewResolverService(reqChan),
+		ErrCh:           make(chan error),
 	}
 }
 

@@ -44,3 +44,4 @@ services:
         intents:
           - intent: flex-algo
             flex_algo_number: 1
+          - intent: high-bandwidth
