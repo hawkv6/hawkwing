@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/cilium/ebpf"
+	"github.com/hawkv6/hawkwing/internal/test"
 	"github.com/hawkv6/hawkwing/pkg/bpf"
 	"go.uber.org/mock/gomock"
 )
@@ -27,12 +28,12 @@ func TestNewInnerMap(t *testing.T) {
 			name: "creates new inner map",
 			args: args{
 				bpf:  mockBpf,
-				spec: &mockClientInnerMapSpec,
+				spec: &test.MockClientInnerMapSpec,
 			},
 			want: &InnerMap{
 				Map: Map{
 					bpf:  mockBpf,
-					spec: &mockClientInnerMapSpec,
+					spec: &test.MockClientInnerMapSpec,
 				},
 			},
 		},
@@ -76,7 +77,7 @@ func TestInnerMap_Build(t *testing.T) {
 			im := &InnerMap{
 				Map: Map{
 					bpf:  mockBpf,
-					spec: &mockClientInnerMapSpec,
+					spec: &test.MockClientInnerMapSpec,
 				},
 			}
 			tt.mockBpf()
@@ -105,12 +106,12 @@ func TestNewOuterMap(t *testing.T) {
 			name: "creates new outer map",
 			args: args{
 				bpf:  mockBpf,
-				spec: &mockClientOuterMapSpec,
+				spec: &test.MockClientOuterMapSpec,
 			},
 			want: &OuterMap{
 				Map: Map{
 					bpf:  mockBpf,
-					spec: &mockClientOuterMapSpec,
+					spec: &test.MockClientOuterMapSpec,
 				},
 			},
 		},
@@ -145,7 +146,7 @@ func TestOuterMap_BuildWith(t *testing.T) {
 					"test": {
 						Map: Map{
 							bpf:  mockBpf,
-							spec: &mockClientInnerMapSpec,
+							spec: &test.MockClientInnerMapSpec,
 						},
 					},
 				},
@@ -162,7 +163,7 @@ func TestOuterMap_BuildWith(t *testing.T) {
 					"test": {
 						Map: Map{
 							bpf:  mockBpf,
-							spec: &mockClientInnerMapSpec,
+							spec: &test.MockClientInnerMapSpec,
 						},
 					},
 				},
@@ -180,7 +181,7 @@ func TestOuterMap_BuildWith(t *testing.T) {
 					"test": {
 						Map: Map{
 							bpf:  mockBpf,
-							spec: &mockClientInnerMapSpec,
+							spec: &test.MockClientInnerMapSpec,
 						},
 					},
 				},
@@ -196,7 +197,7 @@ func TestOuterMap_BuildWith(t *testing.T) {
 			im := &OuterMap{
 				Map: Map{
 					bpf:  mockBpf,
-					spec: &mockClientOuterMapSpec,
+					spec: &test.MockClientOuterMapSpec,
 				},
 			}
 			tt.mockBpf()
@@ -224,12 +225,12 @@ func TestNewLookupMap(t *testing.T) {
 			name: "creates new lookup map",
 			args: args{
 				bpf:  mockBpf,
-				spec: &mockClientLookupMapSpec,
+				spec: &test.MockClientLookupMapSpec,
 			},
 			want: &LookupMap{
 				Map: Map{
 					bpf:  mockBpf,
-					spec: &mockClientLookupMapSpec,
+					spec: &test.MockClientLookupMapSpec,
 				},
 			},
 		},
@@ -264,7 +265,7 @@ func TestLookupMap_BuildWith(t *testing.T) {
 					"test": {
 						Map: Map{
 							bpf:  mockBpf,
-							spec: &mockClientInnerMapSpec,
+							spec: &test.MockClientInnerMapSpec,
 						},
 					},
 				},
@@ -281,7 +282,7 @@ func TestLookupMap_BuildWith(t *testing.T) {
 					"test": {
 						Map: Map{
 							bpf:  mockBpf,
-							spec: &mockClientInnerMapSpec,
+							spec: &test.MockClientInnerMapSpec,
 						},
 					},
 				},
@@ -297,7 +298,7 @@ func TestLookupMap_BuildWith(t *testing.T) {
 			im := &LookupMap{
 				Map: Map{
 					bpf:  mockBpf,
-					spec: &mockClientLookupMapSpec,
+					spec: &test.MockClientLookupMapSpec,
 				},
 			}
 			tt.mockBpf()
@@ -325,12 +326,12 @@ func TestNewReverseMap(t *testing.T) {
 			name: "creates new reverse map",
 			args: args{
 				bpf:  mockBpf,
-				spec: &mockClientReverseMapSpec,
+				spec: &test.MockClientReverseMapSpec,
 			},
 			want: &ReverseMap{
 				Map: Map{
 					bpf:  mockBpf,
-					spec: &mockClientReverseMapSpec,
+					spec: &test.MockClientReverseMapSpec,
 				},
 			},
 		},
@@ -365,7 +366,7 @@ func TestReverseMap_BuildWith(t *testing.T) {
 					"test": {
 						Map: Map{
 							bpf:  mockBpf,
-							spec: &mockClientInnerMapSpec,
+							spec: &test.MockClientInnerMapSpec,
 						},
 					},
 				},
@@ -382,7 +383,7 @@ func TestReverseMap_BuildWith(t *testing.T) {
 					"test": {
 						Map: Map{
 							bpf:  mockBpf,
-							spec: &mockClientInnerMapSpec,
+							spec: &test.MockClientInnerMapSpec,
 						},
 					},
 				},
@@ -397,7 +398,7 @@ func TestReverseMap_BuildWith(t *testing.T) {
 			im := &ReverseMap{
 				Map: Map{
 					bpf:  mockBpf,
-					spec: &mockClientReverseMapSpec,
+					spec: &test.MockClientReverseMapSpec,
 				},
 			}
 			tt.mockBpf()

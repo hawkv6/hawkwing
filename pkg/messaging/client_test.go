@@ -28,6 +28,8 @@ func TestMessagingClient_manageStreams(t *testing.T) {
 	messagingClient := &MessagingClient{
 		IntentControllerClient: mockClient,
 		messagingChannels:      mc,
+		streamErrors:           make(chan error),
+		ErrCh:                  make(chan error),
 	}
 	mockStream := api.NewMockIntentController_GetIntentPathClient(ctrl)
 	mockGrpcStreamCh := make(chan *api.PathRequest)
@@ -36,13 +38,20 @@ func TestMessagingClient_manageStreams(t *testing.T) {
 		name     string
 		testFunc func()
 	}{
-		// {
-		// 	name: "GetIntentPath returns no stream",
-		// 	testFunc: func() {
-		// 		mockClient.EXPECT().GetIntentPath(gomock.Any()).Return(nil, fmt.Errorf("error")).AnyTimes()
-		// 		messagingClient.manageStreams()
-		// 	},
-		// },
+		{
+			name: "GetIntentPath returns no stream",
+			testFunc: func() {
+				mockClient.EXPECT().GetIntentPath(gomock.Any()).Return(nil, fmt.Errorf("error")).AnyTimes()
+
+				go messagingClient.manageStreams()
+
+				select {
+				case <-messagingClient.ErrCh:
+				case <-time.After(time.Second * 2):
+					t.Errorf("manageStreams() = want %v, got %v", "message in messagingClient.ErrCh", "no message in messagingClient.ErrCh")
+				}
+			},
+		},
 		{
 			name: "send returns error",
 			testFunc: func() {
@@ -70,6 +79,11 @@ func TestMessagingClient_manageStreams(t *testing.T) {
 
 				go messagingClient.manageStreams()
 				mc.ChMessageIntentRequest <- &api.PathRequest{}
+				select {
+				case <-messagingClient.ErrCh:
+				case <-time.After(time.Second * 2):
+					t.Errorf("manageStreams() = want %v, got %v", "message in messagingClient.ErrCh", "no message in messagingClient.ErrCh")
+				}
 			},
 		},
 		{
@@ -142,6 +156,15 @@ func TestMessagingClient_manageStreams(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.testFunc()
 			ctrl.Finish()
+			ctrl = gomock.NewController(t)
+			mockClient = api.NewMockIntentControllerClient(ctrl)
+			mockStream = api.NewMockIntentController_GetIntentPathClient(ctrl)
+			messagingClient = &MessagingClient{
+				IntentControllerClient: mockClient,
+				messagingChannels:      mc,
+				streamErrors:           make(chan error),
+				ErrCh:                  make(chan error),
+			}
 		})
 	}
 }

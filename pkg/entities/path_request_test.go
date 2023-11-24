@@ -244,6 +244,114 @@ func TestCreatePathRequestsForService(t *testing.T) {
 						},
 					},
 				},
+				{
+					Ipv6DestinationAddress: "fcbb:cc00:4::a",
+					Intents: []Intent{
+						{
+							IntentType: types.IntentTypeSfc,
+							IntentValues: []IntentValue{
+								{
+									IntentValueType: types.IntentValueTypeSFC,
+									StringValue:     "function1",
+								},
+								{
+									IntentValueType: types.IntentValueTypeSFC,
+									StringValue:     "function2",
+								},
+							},
+						},
+					},
+				},
+				{
+					Ipv6DestinationAddress: "fcbb:cc00:4::b",
+					Intents: []Intent{
+						{
+							IntentType: types.IntentTypeSfc,
+							IntentValues: []IntentValue{
+								{
+									IntentValueType: types.IntentValueTypeSFC,
+									StringValue:     "function1",
+								},
+								{
+									IntentValueType: types.IntentValueTypeSFC,
+									StringValue:     "function2",
+								},
+							},
+						},
+					},
+				},
+				{
+					Ipv6DestinationAddress: "fcbb:cc00:4::c",
+					Intents: []Intent{
+						{
+							IntentType: types.IntentTypeSfc,
+							IntentValues: []IntentValue{
+								{
+									IntentValueType: types.IntentValueTypeSFC,
+									StringValue:     "function1",
+								},
+								{
+									IntentValueType: types.IntentValueTypeSFC,
+									StringValue:     "function2",
+								},
+							},
+						},
+					},
+				},
+				{
+					Ipv6DestinationAddress: "fcbb:cc00:4::a",
+					Intents: []Intent{
+						{
+							IntentType:   types.IntentTypeLowBandwidth,
+							IntentValues: []IntentValue{},
+						},
+					},
+				},
+				{
+					Ipv6DestinationAddress: "fcbb:cc00:4::b",
+					Intents: []Intent{
+						{
+							IntentType:   types.IntentTypeLowBandwidth,
+							IntentValues: []IntentValue{},
+						},
+					},
+				},
+				{
+					Ipv6DestinationAddress: "fcbb:cc00:4::c",
+					Intents: []Intent{
+						{
+							IntentType:   types.IntentTypeLowBandwidth,
+							IntentValues: []IntentValue{},
+						},
+					},
+				},
+				{
+					Ipv6DestinationAddress: "fcbb:cc00:4::a",
+					Intents: []Intent{
+						{
+							IntentType:   types.IntentTypeLowBandwidth,
+							IntentValues: []IntentValue{},
+						},
+					},
+				},
+				{
+					Ipv6DestinationAddress: "fcbb:cc00:4::b",
+					Intents: []Intent{
+						{
+							IntentType:   types.IntentTypeLowBandwidth,
+							IntentValues: []IntentValue{},
+						},
+					},
+				},
+				{
+					Ipv6DestinationAddress: "fcbb:cc00:4::c",
+					Intents: []Intent{
+						{
+							IntentType:   types.IntentTypeLowBandwidth,
+							IntentValues: []IntentValue{},
+						},
+					},
+				},
 			},
 		},
 	}

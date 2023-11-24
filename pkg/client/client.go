@@ -7,20 +7,14 @@ import (
 	"github.com/hawkv6/hawkwing/pkg/bpf"
 	"github.com/hawkv6/hawkwing/pkg/bpf/client"
 	"github.com/hawkv6/hawkwing/pkg/linker"
-	"github.com/hawkv6/hawkwing/pkg/logging"
 	"github.com/hawkv6/hawkwing/pkg/maps"
 	"github.com/hawkv6/hawkwing/pkg/messaging"
 	"github.com/hawkv6/hawkwing/pkg/syncer"
 	"github.com/vishvananda/netlink"
 )
 
-var log = logging.DefaultLogger.WithField("subsystem", Subsystem)
-
-const (
-	Subsystem = "go-client"
-)
-
 type Client struct {
+	mainErrCh         chan error
 	iface             netlink.Link
 	xdpLinker         *linker.XdpLinker
 	tcLinker          *linker.TcLinker
@@ -32,7 +26,7 @@ type Client struct {
 	syncer            *syncer.Syncer
 }
 
-func NewClient(interfaceName string) (*Client, error) {
+func NewClient(mainErrCh chan error, interfaceName string) (*Client, error) {
 	iface, err := netlink.LinkByName(interfaceName)
 	if err != nil {
 		return nil, fmt.Errorf("could not lookup network iface %q: %s", interfaceName, err)
@@ -66,9 +60,10 @@ func NewClient(interfaceName string) (*Client, error) {
 	adapterChannels := messaging.NewAdapterChannels()
 	messenger := messaging.NewMessagingClient(messagingChannels)
 	adapter := messaging.NewMessagingAdapter(messagingChannels, adapterChannels)
-	syncer := syncer.NewSyncer(adapterChannels, clientMap)
+	syncer := syncer.NewSyncer(realBpf, adapterChannels, clientMap)
 
 	return &Client{
+		mainErrCh:         mainErrCh,
 		iface:             iface,
 		xdpLinker:         xdpLinker,
 		tcLinker:          tcLinker,
@@ -89,19 +84,25 @@ func (c *Client) Start() {
 		c.adapter.Start()
 		c.syncer.Start()
 		c.syncer.FetchAll()
+		select {
+		case err := <-c.messenger.ErrCh:
+			c.mainErrCh <- fmt.Errorf("messenger error: %s", err)
+		case err := <-c.syncer.ErrCh:
+			c.mainErrCh <- fmt.Errorf("syncer error: %s", err)
+		}
 	}()
 
 	go func() {
 		defer c.wg.Done()
 		if err := c.xdpLinker.Attach(); err != nil {
-			log.WithError(err).Error("could not attach client XDP program")
+			c.mainErrCh <- fmt.Errorf("could not attach client XDP program: %s", err)
 		}
 	}()
 
 	go func() {
 		defer c.wg.Done()
 		if err := c.tcLinker.Attach(); err != nil {
-			log.WithError(err).Error("could not attach client TC program")
+			c.mainErrCh <- fmt.Errorf("could not attach client TC program: %s", err)
 		}
 	}()
 
@@ -111,10 +112,10 @@ func (c *Client) Start() {
 
 func (c *Client) Stop() {
 	if err := c.xdpLinker.Detach(); err != nil {
-		log.WithError(err).Error("could not detach client XDP program")
+		c.mainErrCh <- fmt.Errorf("could not detach client XDP program: %s", err)
 	}
 	if err := c.tcLinker.Detach(); err != nil {
-		log.WithError(err).Error("could not detach TC program")
+		c.mainErrCh <- fmt.Errorf("could not detach client TC program: %s", err)
 	}
 	c.wg.Wait()
 }

@@ -11,47 +11,6 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-var (
-	mockClientInnerMapSpec = ebpf.MapSpec{
-		Name:       "client_inner_map",
-		Type:       ebpf.Hash,
-		KeySize:    2,
-		ValueSize:  164,
-		MaxEntries: 1,
-	}
-	mockClientOuterMapSpec = ebpf.MapSpec{
-		Name:       "client_outer_map",
-		Type:       ebpf.HashOfMaps,
-		KeySize:    4,
-		ValueSize:  4,
-		MaxEntries: 100,
-		Pinning:    ebpf.PinByName,
-		Contents:   make([]ebpf.MapKV, 1),
-		InnerMap:   &mockClientInnerMapSpec,
-	}
-	mockClientLookupMapSpec = ebpf.MapSpec{
-		Name:       "client_lookup_map",
-		Type:       ebpf.Hash,
-		KeySize:    4,
-		ValueSize:  4,
-		MaxEntries: 100,
-	}
-	mockClientReverseMapSpec = ebpf.MapSpec{
-		Name:       "client_reverse_map",
-		Type:       ebpf.Hash,
-		KeySize:    4,
-		ValueSize:  4,
-		MaxEntries: 100,
-	}
-	mockClientCollectionSpec = ebpf.CollectionSpec{
-		Maps: map[string]*ebpf.MapSpec{
-			"client_outer_map":   &mockClientOuterMapSpec,
-			"client_lookup_map":  &mockClientLookupMapSpec,
-			"client_reverse_map": &mockClientReverseMapSpec,
-		},
-	}
-)
-
 func TestNewClientMap(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockBpf := bpf.NewMockBpf(ctrl)
@@ -86,7 +45,7 @@ func TestNewClientMap(t *testing.T) {
 			},
 			wantErr: false,
 			mockReader: func() {
-				mockClientBpfReader.EXPECT().ReadClientBpfSpecs().Return(&mockClientCollectionSpec, nil)
+				mockClientBpfReader.EXPECT().ReadClientBpfSpecs().Return(&test.MockClientCollectionSpec, nil)
 			},
 		},
 	}
@@ -107,7 +66,7 @@ func TestClientMap_Create(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockBpf := bpf.NewMockBpf(ctrl)
 	mockClientBpfReader := client.NewMockClientBpfReader(ctrl)
-	mockClientBpfReader.EXPECT().ReadClientBpfSpecs().Return(&mockClientCollectionSpec, nil)
+	mockClientBpfReader.EXPECT().ReadClientBpfSpecs().Return(&test.MockClientCollectionSpec, nil)
 	clientDataMap, err := NewClientMap(mockBpf, mockClientBpfReader)
 	if err != nil {
 		t.Errorf("NewClientMap() should not return error: %s", err)

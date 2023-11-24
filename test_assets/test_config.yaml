@@ -46,3 +46,16 @@ services:
           - intent: low-latency
             min_value: 1
             max_value: 2
+      - port: 8080
+        intents:
+          - intent: sfc
+            functions:
+              - function1
+              - function2
+      - port: 18
+        intents:
+          - intent: low-bandwidth
+      - port: 19
+        intents:
+          - intent: low-bandwidth
+          

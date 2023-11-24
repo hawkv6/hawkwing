@@ -2,6 +2,7 @@ package syncer
 
 import (
 	"fmt"
+	"reflect"
 	"slices"
 
 	"github.com/hawkv6/hawkwing/internal/config"
@@ -55,24 +56,32 @@ func (s *Syncer) storeSidList(intentResponse *entities.PathResult) error {
 //   - The ports of the application that needs to be updated.
 func (s *Syncer) getApplicationPortsToUpdate(intentResult *entities.PathResult) []int {
 	configIntents := s.getApplicationConfigIntents(intentResult)
-	resultIntents := s.getApplicationResultIntents(intentResult)
+	resultIntents := s.getResultIntents(intentResult)
 	var ports []int
-	for _, services := range config.Params.Services {
-		if slices.Contains(services.Ipv6Addresses, intentResult.Ipv6DestinationAddress) {
-			for _, application := range services.Applications {
-				for _, ri := range resultIntents {
-					if slices.Contains(configIntents, ri) {
-						ports = append(ports, application.Port)
-					}
-				}
-			}
+	for port, intents := range configIntents {
+		if reflect.DeepEqual(intents, resultIntents) {
+			ports = append(ports, port)
 		}
 	}
+	// for _, services := range config.Params.Services {
+	// 	if slices.Contains(services.Ipv6Addresses, intentResult.Ipv6DestinationAddress) {
+	// 		for _, application := range services.Applications {
+	// 			// for _, ri := range resultIntents {
+	// 			// 	if slices.Contains(configIntents, ri) {
+	// 			// 		ports = append(ports, application.Port)
+	// 			// 	}
+	// 			// }
+	// 			if reflect.DeepEqual(configIntents, resultIntents) {
+	// 				ports = append(ports, application.Port)
+	// 			}
+	// 		}
+	// 	}
+	// }
 
 	return ports
 }
 
-// getApplicationResultIntents returns the intents that were satisfied in the
+// getResultIntents returns the intents that were satisfied in the
 // intent result.
 //
 // Parameters:
@@ -81,7 +90,7 @@ func (s *Syncer) getApplicationPortsToUpdate(intentResult *entities.PathResult) 
 //
 // Returns:
 //   - The intents that were satisfied in the intent result.
-func (s *Syncer) getApplicationResultIntents(intentResult *entities.PathResult) []string {
+func (s *Syncer) getResultIntents(intentResult *entities.PathResult) []string {
 	var intents []string
 	for _, ir := range intentResult.Intents {
 		intents = append(intents, ir.IntentType.String())
@@ -98,13 +107,14 @@ func (s *Syncer) getApplicationResultIntents(intentResult *entities.PathResult) 
 //
 // Returns:
 //   - The intents that were configured for the application.
-func (s *Syncer) getApplicationConfigIntents(intentResult *entities.PathResult) []string {
-	var intents []string
+func (s *Syncer) getApplicationConfigIntents(intentResult *entities.PathResult) map[int][]string {
+	intents := make(map[int][]string)
 	for _, service := range config.Params.Services {
 		if slices.Contains(service.Ipv6Addresses, intentResult.Ipv6DestinationAddress) {
 			for _, application := range service.Applications {
 				for _, intent := range application.Intents {
-					intents = append(intents, intent.Intent)
+					intents[application.Port] = append(intents[application.Port], intent.Intent)
+					// intents = append(intents, intent.Intent)
 				}
 			}
 		}

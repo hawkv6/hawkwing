@@ -2,6 +2,7 @@ package messaging
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -21,12 +22,14 @@ type MessagingClient struct {
 	messagingChannels *MessagingChannels
 	conn              *grpc.ClientConn
 	streamErrors      chan error
+	ErrCh             chan error
 }
 
 func NewMessagingClient(messagingChannels *MessagingChannels) *MessagingClient {
 	return &MessagingClient{
 		messagingChannels: messagingChannels,
 		streamErrors:      make(chan error),
+		ErrCh:             make(chan error),
 	}
 }
 
@@ -37,19 +40,32 @@ func (c *MessagingClient) Start() {
 }
 
 func (c *MessagingClient) connect() {
+	opts := []grpc.DialOption{
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithBlock(),
+	}
+
 	connectionAddress := "[" + config.Params.HawkEye.Hostname + "]" + ":" + strconv.Itoa(config.Params.HawkEye.Port)
+	retryCount := 0
+	maxRetries := 5
+
 	for {
-		conn, err := grpc.Dial(connectionAddress, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.Dial(connectionAddress, opts...)
 		if err != nil {
 			log.Printf("failed to dial: %v, retrying...", err)
+			retryCount++
+			if retryCount >= maxRetries {
+				c.ErrCh <- fmt.Errorf("failed to connect after %d retries", maxRetries)
+				return
+			}
 			time.Sleep(1 * time.Second)
 			continue
 		}
 		c.conn = conn
 		c.IntentControllerClient = api.NewIntentControllerClient(conn)
+		log.Printf("connected to %s", connectionAddress)
 		break
 	}
-	log.Printf("connected to %s", connectionAddress)
 }
 
 func (c *MessagingClient) manageStreams() {
@@ -57,10 +73,9 @@ func (c *MessagingClient) manageStreams() {
 		ctx, cancel := context.WithCancel(context.Background())
 		stream, err := c.IntentControllerClient.GetIntentPath(ctx)
 		if err != nil {
-			log.Fatalf("failed to get intent path: %v", err)
-			// log.Printf("failed to get intent path: %v, retrying...", err)
-			// c.streamErrors <- err
-			// continue
+			c.ErrCh <- fmt.Errorf("failed to get intent path: %v", err)
+			cancel()
+			return
 		}
 
 		go c.handleGetIntentPathRequests(ctx, stream)
@@ -69,7 +84,7 @@ func (c *MessagingClient) manageStreams() {
 		err = <-c.streamErrors
 		cancel()
 
-		log.Fatalf("stream error: %v", err)
+		c.ErrCh <- fmt.Errorf("stream error: %v", err)
 	}
 }
 
