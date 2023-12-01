@@ -74,8 +74,7 @@ start-webserver_%: ## Start the webserver (usage: make start-webserver_<namespac
 	NAMESPACE=`echo $* | cut -d- -f1` && \
 	PORT=`echo $* | cut -d- -f2` && \
 	echo "Starting webserver in namespace ns-host-$$NAMESPACE on port $$PORT..." && \
-	cd tools/web && sudo ip netns exec ns-host-$$NAMESPACE ./webserver host-$$NAMESPACE $$PORT
-	# cd tools/web && sudo ip netns exec ns-host-$* ./webserver host-$* 80
+	cd tools/web && sudo ip netns exec ns-host-$$NAMESPACE ./webserver --host host-$$NAMESPACE --port $$PORT
 
 start-controller: ## Start the controller
 	@echo "Starting controller..."

@@ -1,0 +1,9 @@
+---
+debugging: true
+hosts:
+  - domain_name: wb.hawk.net
+    ipv6_addresses:
+      - fcbb:cc00:2::a
+  - domain_name: wc.hawk.net
+    ipv6_addresses:
+      - fcbb:cc00:3::a
