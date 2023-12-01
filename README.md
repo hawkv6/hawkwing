@@ -20,7 +20,8 @@ The Hawkwing configuration is structured as follows:
 
 | Section | Subsection | Key | Description |
 | ------- | ---------- | --- | ----------- |
-| `hawkeye` | | `address` | The IPv6 address of the HawkEye controller. |
+| `hawkeye` | | `enabled` | Enable/disable HawkEye controller. |
+| | | `address` | The IPv6 address of the HawkEye controller. |
 | | | `port` | The port number on which the HawkEye controller listens. |
 | `services` | | `service1`, `service2`, `service3`, ... | Service-specific configurations. Each service has its own set of configurations. |
 | | `domain_name` | | The domain name of the service. |
@@ -52,6 +53,7 @@ The following example shows a configuration file for a service with three applic
 ```yaml
 ---
 hawkeye:
+  enabled: true
   address: fcbb:cc00:5::f
   port: 5001
 services:
