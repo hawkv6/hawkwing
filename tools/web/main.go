@@ -1,30 +1,37 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
-	"os"
+
+	"github.com/mattes/go-asciibot"
 )
 
-func main() {
-	if len(os.Args) < 3 {
-		fmt.Println("Usage: go run main.go <host-b|host-c> <port>")
-		return
+var (
+	host string
+	port string
+)
+
+func init() {
+	flag.Usage = func() {
+		fmt.Println("Usage: web [options]")
+		flag.PrintDefaults()
 	}
+	flag.StringVar(&host, "host", "host-b", "host name which should be displayed")
+	flag.StringVar(&port, "port", "8080", "port number to listen on")
+}
 
-	host := os.Args[1]
-	port := os.Args[2]
+func generateMessage(host string) string {
+	image := asciibot.Random()
+	return fmt.Sprintf("Welcome from %s\n%s", host, image)
+}
 
+func main() {
+	flag.Parse()
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Received request from", r.RemoteAddr)
-		switch host {
-		case "host-b":
-			fmt.Fprintln(w, "Welcome from Host-B")
-		case "host-c":
-			fmt.Fprintln(w, "Welcome from Host-C")
-		default:
-			http.Error(w, "Invalid host", http.StatusBadRequest)
-		}
+		fmt.Fprintln(w, generateMessage(host))
 	})
 
 	fmt.Printf("Starting server on host %s at port %s\n", host, port)
