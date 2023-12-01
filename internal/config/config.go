@@ -10,16 +10,15 @@ import (
 const Subsystem = "go-config"
 
 var (
-	// Use \ as key delimiter because we have . in the key
 	viperInstance = viper.NewWithOptions(viper.KeyDelimiter("\\"))
 	Params        Config
 	log           = logging.DefaultLogger.WithField("subsystem", Subsystem)
 )
 
 type HawkEyeConfig struct {
-	// TODO: validate the format of the hostname
-	Hostname string `mapstructure:"hostname" validate:"required"`
-	Port     int    `mapstructure:"port" validate:"required,gt=0,lt=65535"`
+	Enabled bool   `mapstructure:"enabled"`
+	Address string `mapstructure:"address" validate:"required,ipv6"`
+	Port    int    `mapstructure:"port" validate:"required,gt=0,lt=65535"`
 }
 
 type Intent struct {

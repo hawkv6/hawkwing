@@ -120,7 +120,7 @@ To use HawkWing, you can either build it from source or use the pre-built binari
 - Linux Kernel 5.15 or higher
 - Privileged access to the client and server
 - IPv6 connectivity between the client and server
-- Configuration file (see [Configuration](#configuration))
+- Configuration file (see [Configuration Structure](#configuration-structure))
 
 ### Client-Mode
 On the client the application can be started using the following command:

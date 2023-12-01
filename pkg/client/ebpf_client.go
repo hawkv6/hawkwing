@@ -25,6 +25,11 @@ func NewEbpfClient(interfaceName string, mainErrCh chan error) (*EbpfClient, *ma
 		return nil, nil, fmt.Errorf("could not lookup network iface %q: %s", interfaceName, err)
 	}
 
+	err = bpf.Mount()
+	if err != nil {
+		return nil, nil, fmt.Errorf("could not mount BPF filesystem: %s", err)
+	}
+
 	realClientBpfReader := &client.RealClientBpfReader{}
 	clientObjs, err := realClientBpfReader.ReadClientBpfObjects()
 	if err != nil {
@@ -33,11 +38,6 @@ func NewEbpfClient(interfaceName string, mainErrCh chan error) (*EbpfClient, *ma
 
 	xdpLinker := linker.NewXdpLinker(iface, clientObjs.ClientIngress)
 	tcLinker := linker.NewTcLinker(iface, clientObjs.ClientEgress, "egress")
-
-	err = bpf.Mount()
-	if err != nil {
-		return nil, nil, fmt.Errorf("could not mount BPF filesystem: %s", err)
-	}
 
 	realBpf := &bpf.RealBpf{}
 	clientMap, err := maps.NewClientMap(realBpf, realClientBpfReader)

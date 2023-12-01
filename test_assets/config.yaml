@@ -1,6 +1,7 @@
 ---
 hawkeye:
-  hostname: fcbb:cc00:5::f # hawkeye.hawk.net
+  enabled: true
+  address: fcbb:cc00:5::f # hawkeye.hawk.net
   port: 5001
 services:
   webserver-b:
