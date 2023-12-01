@@ -31,6 +31,11 @@ func NewServer(interfaceName string) (*Server, error) {
 		return nil, fmt.Errorf("could not lookup network iface %q: %s", interfaceName, err)
 	}
 
+	err = bpf.Mount()
+	if err != nil {
+		return nil, fmt.Errorf("could not mount BPF filesystem: %s", err)
+	}
+
 	serverObjs, err := server.ReadServerBpfObjects()
 	if err != nil {
 		return nil, fmt.Errorf("could not load server bpf objects: %s", err)
@@ -38,11 +43,6 @@ func NewServer(interfaceName string) (*Server, error) {
 
 	xdpLinker := linker.NewXdpLinker(iface, serverObjs.ServerIngress)
 	tcLinker := linker.NewTcLinker(iface, serverObjs.ServerEgress, "egress")
-
-	err = bpf.Mount()
-	if err != nil {
-		return nil, fmt.Errorf("could not mount BPF filesystem: %s", err)
-	}
 
 	realBpf := &bpf.RealBpf{}
 	serverMap, err := maps.NewServerMap(realBpf)

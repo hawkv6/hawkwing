@@ -45,7 +45,7 @@ func (c *MessagingClient) connect() {
 		grpc.WithBlock(),
 	}
 
-	connectionAddress := "[" + config.Params.HawkEye.Hostname + "]" + ":" + strconv.Itoa(config.Params.HawkEye.Port)
+	connectionAddress := "[" + config.Params.HawkEye.Address + "]" + ":" + strconv.Itoa(config.Params.HawkEye.Port)
 	retryCount := 0
 	maxRetries := 5
 

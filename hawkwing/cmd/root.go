@@ -4,22 +4,26 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/hawkv6/hawkwing/internal/config"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-var (
-	cfgFile string
-	log     = logrus.New()
-)
+var log = logrus.New()
 
 var rootCmd = &cobra.Command{
 	Use:   "hawkwing",
 	Short: "Hawkwing brings SRv6 policies to your end-host.",
-	Long: `Hawkwing brings dynamic SRv6 policies to your end-host.
-	Complete documentation is available at:
-	https://github.com/hawkv6/hawkwing
+	Long: `
+Hawkwing brings dynamic SRv6 policies to your end-host.
+
+Start HawkWing in client-mode:
+	hawkwing client --interface <interface> --config <config-file>
+
+Start HawkWing in server-mode:
+	hawkwing server --interface <interface>
+
+Complete documentation is available at:
+https://github.com/hawkv6/hawkwing
 	`,
 }
 
@@ -32,19 +36,6 @@ func Execute() {
 
 func init() {
 	checkIsRoot()
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is ./config.yaml)")
-
-	cobra.OnInitialize(initConfig)
-}
-
-func initConfig() {
-	if cfgFile != "" {
-		config.GetInstance().SetConfigFile(cfgFile)
-	}
-
-	if err := config.Parse(); err != nil {
-		log.Fatalln(err)
-	}
 }
 
 func checkIsRoot() {

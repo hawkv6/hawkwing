@@ -81,7 +81,7 @@ start_client_application() {
 start_server_application() {
     echo -e "${GREEN}Starting application...${NC}"
     mount -t bpf bpf /sys/fs/bpf
-    cd .. && ./out/bin/hawkwing server --config ./test_assets/config.yaml --interface host-b
+    cd .. && ./out/bin/hawkwing server --interface host-b
 }
 
 # Parse arguments

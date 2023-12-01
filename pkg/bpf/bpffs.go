@@ -65,6 +65,11 @@ func isMounted(path string) (bool, error) {
 		return false, fmt.Errorf("could not statfs %q: %s", path, err)
 	}
 
+	if filesytemType.Type != unix.BPF_FS_MAGIC {
+		// path is not a bpf mount point
+		return false, nil
+	}
+
 	return true, nil
 }
 
