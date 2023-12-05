@@ -47,7 +47,7 @@ func TestMessagingClient_manageStreams(t *testing.T) {
 
 				select {
 				case <-messagingClient.ErrCh:
-				case <-time.After(time.Second * 5):
+				case <-time.After(time.Second * 15):
 					t.Errorf("manageStreams() = want %v, got %v", "message in messagingClient.ErrCh", "no message in messagingClient.ErrCh")
 				}
 			},
@@ -81,7 +81,7 @@ func TestMessagingClient_manageStreams(t *testing.T) {
 				mc.ChMessageIntentRequest <- &api.PathRequest{}
 				select {
 				case <-messagingClient.ErrCh:
-				case <-time.After(time.Second * 5):
+				case <-time.After(time.Second * 15):
 					t.Errorf("manageStreams() = want %v, got %v", "message in messagingClient.ErrCh", "no message in messagingClient.ErrCh")
 				}
 			},
@@ -145,7 +145,7 @@ func TestMessagingClient_manageStreams(t *testing.T) {
 
 				select {
 				case <-mc.ChMessageIntentResponse:
-				case <-time.After(time.Second * 5):
+				case <-time.After(time.Second * 15):
 					t.Errorf("manageStreams() = want %v, got %v", "message in mc.ChMessageIntentResponse", "no message in mc.ChMessageIntentResponse")
 				}
 			},

@@ -6,13 +6,15 @@ import (
 )
 
 type PathResult struct {
+	Ipv6SourceAddress      string
 	Ipv6DestinationAddress string
 	Intents                []Intent
 	Ipv6SidAddresses       []string
 }
 
-func NewPathResult(ipv6daddr string, intents []Intent, ipv6SidAddresses []string) *PathResult {
+func NewPathResult(ipv6saddr string, ipv6daddr string, intents []Intent, ipv6SidAddresses []string) *PathResult {
 	return &PathResult{
+		Ipv6SourceAddress:      ipv6saddr,
 		Ipv6DestinationAddress: ipv6daddr,
 		Intents:                intents,
 		Ipv6SidAddresses:       ipv6SidAddresses,
@@ -36,6 +38,7 @@ func UnmarshalPathResult(pr *api.PathResult) *PathResult {
 		})
 	}
 	return &PathResult{
+		Ipv6SourceAddress:      pr.Ipv6SourceAddress,
 		Ipv6DestinationAddress: pr.Ipv6DestinationAddress,
 		Intents:                intents,
 		Ipv6SidAddresses:       pr.Ipv6SidAddresses,

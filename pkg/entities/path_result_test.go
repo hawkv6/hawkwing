@@ -10,6 +10,7 @@ import (
 
 func TestNewPathResult(t *testing.T) {
 	type args struct {
+		ipv6saddr        string
 		ipv6daddr        string
 		intents          []Intent
 		ipv6SidAddresses []string
@@ -22,6 +23,7 @@ func TestNewPathResult(t *testing.T) {
 		{
 			name: "TestNewPathResult",
 			args: args{
+				ipv6saddr: "2001:db8::a",
 				ipv6daddr: "2001:db8::1",
 				intents: []Intent{
 					{
@@ -44,6 +46,7 @@ func TestNewPathResult(t *testing.T) {
 				},
 			},
 			want: &PathResult{
+				Ipv6SourceAddress:      "2001:db8::a",
 				Ipv6DestinationAddress: "2001:db8::1",
 				Intents: []Intent{
 					{
@@ -68,7 +71,7 @@ func TestNewPathResult(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		if got := NewPathResult(tt.args.ipv6daddr, tt.args.intents, tt.args.ipv6SidAddresses); !reflect.DeepEqual(got, tt.want) {
+		if got := NewPathResult(tt.args.ipv6saddr, tt.args.ipv6daddr, tt.args.intents, tt.args.ipv6SidAddresses); !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("NewPathResult() = %v, want %v", got, tt.want)
 		}
 	}
@@ -76,6 +79,7 @@ func TestNewPathResult(t *testing.T) {
 
 func TestUnmarshalPathResult(t *testing.T) {
 	api_pr := &api.PathResult{
+		Ipv6SourceAddress:      "2001:db8::a",
 		Ipv6DestinationAddress: "2001:db8::1",
 		Intents: []*api.Intent{
 			{
@@ -89,6 +93,7 @@ func TestUnmarshalPathResult(t *testing.T) {
 	}
 
 	wanted_pr := &PathResult{
+		Ipv6SourceAddress:      "2001:db8::a",
 		Ipv6DestinationAddress: "2001:db8::1",
 		Intents: []Intent{
 			{

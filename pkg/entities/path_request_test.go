@@ -11,6 +11,7 @@ import (
 
 func TestNewPathRequest(t *testing.T) {
 	type args struct {
+		ipv6saddr string
 		ipv6daddr string
 		intents   []Intent
 	}
@@ -22,6 +23,7 @@ func TestNewPathRequest(t *testing.T) {
 		{
 			name: "TestNewPathRequest",
 			args: args{
+				ipv6saddr: "2001:db8::a",
 				ipv6daddr: "2001:db8::1",
 				intents: []Intent{
 					{
@@ -40,6 +42,7 @@ func TestNewPathRequest(t *testing.T) {
 				},
 			},
 			want: PathRequest{
+				Ipv6SourceAddress:      "2001:db8::a",
 				Ipv6DestinationAddress: "2001:db8::1",
 				Intents: []Intent{
 					{
@@ -60,7 +63,7 @@ func TestNewPathRequest(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		if got := NewPathRequest(tt.args.ipv6daddr, tt.args.intents); !reflect.DeepEqual(got, tt.want) {
+		if got := NewPathRequest(tt.args.ipv6saddr, tt.args.ipv6daddr, tt.args.intents); !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("NewPathRequest() = %v, want %v", got, tt.want)
 		}
 	}
@@ -68,7 +71,7 @@ func TestNewPathRequest(t *testing.T) {
 }
 
 func TestPathRequest_Marshal(t *testing.T) {
-	pr := NewPathRequest("2001:db8::1", []Intent{
+	pr := NewPathRequest("2001:db8::a", "2001:db8::1", []Intent{
 		{
 			IntentType: types.IntentTypeSfc,
 			IntentValues: []IntentValue{
@@ -85,6 +88,9 @@ func TestPathRequest_Marshal(t *testing.T) {
 	})
 	if pr.Marshal() == nil {
 		t.Errorf("PathRequest.Marshal() = nil")
+	}
+	if pr.Marshal().Ipv6SourceAddress != "2001:db8::a" {
+		t.Errorf("PathRequest.Marshal() = %v", pr.Marshal().Ipv6SourceAddress)
 	}
 	if pr.Marshal().Ipv6DestinationAddress != "2001:db8::1" {
 		t.Errorf("PathRequest.Marshal() = %v", pr.Marshal().Ipv6DestinationAddress)
@@ -125,6 +131,7 @@ func TestCreatePathRequestsForService(t *testing.T) {
 			},
 			want: []PathRequest{
 				{
+					Ipv6SourceAddress:      "fcbb:cc00:1::a",
 					Ipv6DestinationAddress: "fcbb:cc00:4::a",
 					Intents: []Intent{
 						{
@@ -165,6 +172,7 @@ func TestCreatePathRequestsForService(t *testing.T) {
 					},
 				},
 				{
+					Ipv6SourceAddress:      "fcbb:cc00:1::a",
 					Ipv6DestinationAddress: "fcbb:cc00:4::b",
 					Intents: []Intent{
 						{
@@ -205,6 +213,7 @@ func TestCreatePathRequestsForService(t *testing.T) {
 					},
 				},
 				{
+					Ipv6SourceAddress:      "fcbb:cc00:1::a",
 					Ipv6DestinationAddress: "fcbb:cc00:4::c",
 					Intents: []Intent{
 						{
@@ -245,6 +254,7 @@ func TestCreatePathRequestsForService(t *testing.T) {
 					},
 				},
 				{
+					Ipv6SourceAddress:      "fcbb:cc00:1::a",
 					Ipv6DestinationAddress: "fcbb:cc00:4::a",
 					Intents: []Intent{
 						{
@@ -263,6 +273,7 @@ func TestCreatePathRequestsForService(t *testing.T) {
 					},
 				},
 				{
+					Ipv6SourceAddress:      "fcbb:cc00:1::a",
 					Ipv6DestinationAddress: "fcbb:cc00:4::b",
 					Intents: []Intent{
 						{
@@ -281,6 +292,7 @@ func TestCreatePathRequestsForService(t *testing.T) {
 					},
 				},
 				{
+					Ipv6SourceAddress:      "fcbb:cc00:1::a",
 					Ipv6DestinationAddress: "fcbb:cc00:4::c",
 					Intents: []Intent{
 						{
@@ -299,6 +311,7 @@ func TestCreatePathRequestsForService(t *testing.T) {
 					},
 				},
 				{
+					Ipv6SourceAddress:      "fcbb:cc00:1::a",
 					Ipv6DestinationAddress: "fcbb:cc00:4::a",
 					Intents: []Intent{
 						{
@@ -308,6 +321,7 @@ func TestCreatePathRequestsForService(t *testing.T) {
 					},
 				},
 				{
+					Ipv6SourceAddress:      "fcbb:cc00:1::a",
 					Ipv6DestinationAddress: "fcbb:cc00:4::b",
 					Intents: []Intent{
 						{
@@ -317,6 +331,7 @@ func TestCreatePathRequestsForService(t *testing.T) {
 					},
 				},
 				{
+					Ipv6SourceAddress:      "fcbb:cc00:1::a",
 					Ipv6DestinationAddress: "fcbb:cc00:4::c",
 					Intents: []Intent{
 						{
@@ -326,6 +341,7 @@ func TestCreatePathRequestsForService(t *testing.T) {
 					},
 				},
 				{
+					Ipv6SourceAddress:      "fcbb:cc00:1::a",
 					Ipv6DestinationAddress: "fcbb:cc00:4::a",
 					Intents: []Intent{
 						{
@@ -335,6 +351,7 @@ func TestCreatePathRequestsForService(t *testing.T) {
 					},
 				},
 				{
+					Ipv6SourceAddress:      "fcbb:cc00:1::a",
 					Ipv6DestinationAddress: "fcbb:cc00:4::b",
 					Intents: []Intent{
 						{
@@ -344,6 +361,7 @@ func TestCreatePathRequestsForService(t *testing.T) {
 					},
 				},
 				{
+					Ipv6SourceAddress:      "fcbb:cc00:1::a",
 					Ipv6DestinationAddress: "fcbb:cc00:4::c",
 					Intents: []Intent{
 						{
