@@ -6,12 +6,14 @@ import (
 )
 
 type PathRequest struct {
+	Ipv6SourceAddress      string
 	Ipv6DestinationAddress string
 	Intents                []Intent
 }
 
-func NewPathRequest(ipv6daddr string, intents []Intent) PathRequest {
+func NewPathRequest(ipv6saddr string, ipv6daddr string, intents []Intent) PathRequest {
 	return PathRequest{
+		Ipv6SourceAddress:      ipv6saddr,
 		Ipv6DestinationAddress: ipv6daddr,
 		Intents:                intents,
 	}
@@ -35,6 +37,7 @@ func (pr *PathRequest) Marshal() *api.PathRequest {
 		})
 	}
 	return &api.PathRequest{
+		Ipv6SourceAddress:      pr.Ipv6SourceAddress,
 		Ipv6DestinationAddress: pr.Ipv6DestinationAddress,
 		Intents:                intents,
 	}
@@ -48,8 +51,8 @@ func CreatePathRequestsForService(serviceKey string) ([]PathRequest, error) {
 		if err != nil {
 			return nil, err
 		}
-		for _, ipv6Addr := range serviceCfg.Ipv6Addresses {
-			pathRequests = append(pathRequests, NewPathRequest(ipv6Addr, applicationIntents))
+		for _, ipv6daddr := range serviceCfg.Ipv6Addresses {
+			pathRequests = append(pathRequests, NewPathRequest(config.Params.ClientIpv6Address, ipv6daddr, applicationIntents))
 		}
 
 	}

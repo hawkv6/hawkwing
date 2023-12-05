@@ -1,4 +1,5 @@
 ---
+client_ipv6_address: fcbb:cc00:1::a
 hawkeye:
   address: fcbb:cc00:5::f
   port: 5001

@@ -42,8 +42,9 @@ type ServiceConfig struct {
 }
 
 type Config struct {
-	HawkEye  HawkEyeConfig            `validate:"required,dive,required"`
-	Services map[string]ServiceConfig `validate:"required,dive,required"`
+	ClientIpv6Address string                   `mapstructure:"client_ipv6_address"`
+	HawkEye           HawkEyeConfig            `validate:"required,dive,required"`
+	Services          map[string]ServiceConfig `validate:"required,dive,required"`
 }
 
 func init() {
