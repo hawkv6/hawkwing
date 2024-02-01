@@ -1,0 +1,22 @@
+---
+hawkeye:
+  enabled: true
+  address: fcbb:cc00:5::f
+  port: 5001
+services:
+  webserver-b:
+    domain_name: wb.hawk.net
+    applications:
+      - port: 80
+        sid:
+          - fcbb:bb00:1::2
+          - fcbb:bb00:3::2
+      - port: 443
+        intents:
+          - intent: low-latency
+  webserver-c:
+    domain_name: wc.hawk.net
+    applications:
+      - port: 1433
+        intents:
+          - intent: low-bandwidth

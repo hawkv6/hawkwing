@@ -26,7 +26,7 @@ usage() {
     echo "  -i [process]        Interact with VPP"
     echo "  -n [namespace]      Open a shell in the specified namespace"
     echo "  -p                  Start the client application"
-    echo "  -q                  Start the server application"
+    echo "  -q [server a or b]  Start the server application"
     exit 1
 }
 
@@ -75,17 +75,18 @@ start_webservers() {
 start_client_application() {
     echo -e "${GREEN}Starting application...${NC}"
     mount -t bpf bpf /sys/fs/bpf
-    cd .. && ./out/bin/hawkwing client --config ./test_assets/config.yaml --interface host-a
+    cd .. && ./out/bin/hawkwing client --config ./test_assets/demo.yaml --interface host-a
 }
 
 start_server_application() {
+    local SERVER=$1
     echo -e "${GREEN}Starting application...${NC}"
     mount -t bpf bpf /sys/fs/bpf
-    cd .. && ./out/bin/hawkwing server --interface host-b
+    cd .. && ./out/bin/hawkwing server --interface host-$SERVER
 }
 
 # Parse arguments
-while getopts ":hsci:n:pq" opt; do
+while getopts ":hsci:n:pq:" opt; do
     case $opt in
         s)
             start_network
@@ -103,7 +104,7 @@ while getopts ":hsci:n:pq" opt; do
             start_client_application
             ;;
         q)
-            start_server_application
+            start_server_application $OPTARG
             ;;
         h)
             usage

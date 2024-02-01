@@ -62,9 +62,9 @@ start-client: ## Start the client
 	@echo "Starting client..."
 	cd tools && sudo ip netns exec ns-host-a ./network.sh -p
 
-start-server: ## Start the server
+start-server_%: ## Start the server (usage: make start-server_<namespace>)
 	@echo "Starting server..."
-	cd tools && sudo ip netns exec ns-host-b ./network.sh -q
+	cd tools && sudo ip netns exec ns-host-$* ./network.sh -q $*
 
 start-dns-server: ## Start the dns server in namespace ns-dns
 	@echo "Starting dns server..."
@@ -78,6 +78,7 @@ start-webserver_%: ## Start the webserver (usage: make start-webserver_<namespac
 
 start-controller: ## Start the controller
 	@echo "Starting controller..."
+	cd ../dummy-controller/out/bin && sudo ip netns exec ns-beyond-ctrl ./dummy-controller server --config ../../test_asset/demo.yaml
 
 fix-clang-style: ## Fix the clang style
 	find . -iname *.h -o -iname *.c | xargs clang-format -i
