@@ -42,7 +42,7 @@ type ServiceConfig struct {
 }
 
 type Config struct {
-	ClientIpv6Address string                   `mapstructure:"client_ipv6_address"`
+	ClientIpv6Address string                   `mapstructure:"client_ipv6_address" validate:"ipv6"`
 	HawkEye           HawkEyeConfig            `validate:"required,dive,required"`
 	Services          map[string]ServiceConfig `validate:"required,dive,required"`
 }
