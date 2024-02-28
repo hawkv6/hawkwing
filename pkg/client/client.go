@@ -3,6 +3,7 @@ package client
 import (
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/hawkv6/hawkwing/internal/config"
 )
@@ -24,7 +25,8 @@ func NewClient(mainErrCh chan error, interfaceName string) (*Client, error) {
 		if err != nil {
 			return nil, err
 		}
-		config.Params.ClientIpv6Address = addrs[0].String()
+		addr := strings.Split(addrs[0].String(), "/")
+		config.Params.ClientIpv6Address = addr[0]
 	}
 
 	ebpfClient, clientMap, err := NewEbpfClient(interfaceName, mainErrCh)
