@@ -19,7 +19,7 @@ func NewClient(mainErrCh chan error, interfaceName string) (*Client, error) {
 		return nil, err
 	}
 
-	if config.Params.ClientIpv6Address != "" {
+	if config.Params.ClientIpv6Address == "" {
 		addrs, err := ief.Addrs()
 		if err != nil {
 			return nil, err
