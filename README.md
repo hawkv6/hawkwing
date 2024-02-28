@@ -142,3 +142,15 @@ On the server the application can be started using the following command:
 ```bash
 sudo hawkwing server -i <interface>
 ```
+
+### Using Docker
+HawkWing can also be run using Docker. To run HawkWing using Docker, use the following commands:  
+  
+On the client:
+```bash
+docker run ghcr.io/hawkv6/hawkwing --privileged --network=host -v /path/to/config:/config hawkwing client -i <interface> --config /config/config.yaml 
+```
+On the server:
+```bash
+docker run ghcr.io/hawkv6/hawkwing --privileged --network=host hawkwing server -i <interface>
+```
