@@ -18,11 +18,14 @@ func NewClient(mainErrCh chan error, interfaceName string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	addrs, err := ief.Addrs()
-	if err != nil {
-		return nil, err
+
+	if config.Params.ClientIpv6Address != "" {
+		addrs, err := ief.Addrs()
+		if err != nil {
+			return nil, err
+		}
+		config.Params.ClientIpv6Address = addrs[0].String()
 	}
-	config.Params.ClientIpv6Address = addrs[0].String()
 
 	ebpfClient, clientMap, err := NewEbpfClient(interfaceName, mainErrCh)
 	if err != nil {

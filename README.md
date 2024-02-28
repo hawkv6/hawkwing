@@ -27,6 +27,7 @@ The Hawkwing configuration is structured as follows:
 
 | Section | Subsection | Key | Description |
 | ------- | ---------- | --- | ----------- |
+| `client_ipv6_address` | | | The IPv6 address of the client. When not defined it takes the first address of the given interface. |
 | `hawkeye` | | `enabled` | Enable/disable HawkEye controller. |
 | | | `address` | The IPv6 address of the HawkEye controller. |
 | | | `port` | The port number on which the HawkEye controller listens. |
