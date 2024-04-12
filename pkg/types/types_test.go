@@ -224,6 +224,13 @@ func TestIntentTypeToString(t *testing.T) {
 			},
 			want: "unspecified",
 		},
+		{
+			name: "IntentTypeLowUtilization",
+			args: args{
+				it: IntentTypeLowUtilization,
+			},
+			want: "low-utilization",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -331,6 +338,14 @@ func TestParseIntentType(t *testing.T) {
 			},
 			want:    IntentTypeUnspecified,
 			wantErr: true,
+		},
+		{
+			name: "IntentTypeLowUtilization",
+			args: args{
+				s: "low-utilization",
+			},
+			want:    IntentTypeLowUtilization,
+			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
