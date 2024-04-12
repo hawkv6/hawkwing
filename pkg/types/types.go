@@ -51,14 +51,15 @@ func ParseIntentValueType(s string) (IntentValueType, error) {
 type IntentType api.IntentType
 
 const (
-	IntentTypeUnspecified   = IntentType(api.IntentType_INTENT_TYPE_UNSPECIFIED)
-	IntentTypeHighBandwidth = IntentType(api.IntentType_INTENT_TYPE_HIGH_BANDWIDTH)
-	IntentTypeLowBandwidth  = IntentType(api.IntentType_INTENT_TYPE_LOW_BANDWIDTH)
-	IntentTypeLowLatency    = IntentType(api.IntentType_INTENT_TYPE_LOW_LATENCY)
-	IntentTypeLowPacketLoss = IntentType(api.IntentType_INTENT_TYPE_LOW_PACKET_LOSS)
-	IntentTypeLowJitter     = IntentType(api.IntentType_INTENT_TYPE_LOW_JITTER)
-	IntentTypeFlexAlgo      = IntentType(api.IntentType_INTENT_TYPE_FLEX_ALGO)
-	IntentTypeSfc           = IntentType(api.IntentType_INTENT_TYPE_SFC)
+	IntentTypeUnspecified    = IntentType(api.IntentType_INTENT_TYPE_UNSPECIFIED)
+	IntentTypeHighBandwidth  = IntentType(api.IntentType_INTENT_TYPE_HIGH_BANDWIDTH)
+	IntentTypeLowBandwidth   = IntentType(api.IntentType_INTENT_TYPE_LOW_BANDWIDTH)
+	IntentTypeLowLatency     = IntentType(api.IntentType_INTENT_TYPE_LOW_LATENCY)
+	IntentTypeLowPacketLoss  = IntentType(api.IntentType_INTENT_TYPE_LOW_PACKET_LOSS)
+	IntentTypeLowJitter      = IntentType(api.IntentType_INTENT_TYPE_LOW_JITTER)
+	IntentTypeFlexAlgo       = IntentType(api.IntentType_INTENT_TYPE_FLEX_ALGO)
+	IntentTypeSfc            = IntentType(api.IntentType_INTENT_TYPE_SFC)
+	IntentTypeLowUtilization = IntentType(api.IntentType_INTENT_TYPE_LOW_UTILIZATION)
 )
 
 func (it IntentType) String() string {
@@ -77,6 +78,8 @@ func (it IntentType) String() string {
 		return "flex-algo"
 	case IntentTypeSfc:
 		return "sfc"
+	case IntentTypeLowUtilization:
+		return "low-utilization"
 	default:
 		return "unspecified"
 	}
@@ -100,6 +103,8 @@ func ParseIntentType(s string) (IntentType, error) {
 		return IntentTypeFlexAlgo, nil
 	case "sfc":
 		return IntentTypeSfc, nil
+	case "low-utilization":
+		return IntentTypeLowUtilization, nil
 	default:
 		return 0, fmt.Errorf("invalid IntentType: %s", s)
 	}
