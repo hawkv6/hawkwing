@@ -1,9 +1,10 @@
 module github.com/hawkv6/hawkwing
 
 go 1.21
+toolchain go1.22.2
 
 require (
-	github.com/cilium/ebpf v0.11.0
+	github.com/cilium/ebpf v0.14.0
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.0
