@@ -11,7 +11,7 @@ require (
 	github.com/spf13/viper v1.18.2
 	github.com/vishvananda/netlink v1.1.0
 	go.uber.org/mock v0.4.0
-	golang.org/x/sys v0.19.0
+	golang.org/x/sys v0.20.0
 	google.golang.org/grpc v1.63.2
 	google.golang.org/protobuf v1.33.0
 )
