@@ -26,10 +26,18 @@ func UnmarshalPathResult(pr *api.PathResult) *PathResult {
 	for _, intent := range pr.Intents {
 		intentValues := make([]IntentValue, 0, len(intent.Values))
 		for _, val := range intent.Values {
+			numberValue := int32(0)
+			stringValue := ""
+			if val.NumberValue != nil {
+				numberValue = *val.NumberValue
+			}
+			if val.StringValue != nil {
+				stringValue = *val.StringValue
+			}
 			intentValues = append(intentValues, IntentValue{
 				IntentValueType: types.IntentValueType(val.Type),
-				NumberValue:     *val.NumberValue,
-				StringValue:     *val.StringValue,
+				NumberValue:     numberValue,
+				StringValue:     stringValue,
 			})
 		}
 		intents = append(intents, Intent{
