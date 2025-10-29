@@ -42,7 +42,6 @@ func (c *MessagingClient) Start() {
 func (c *MessagingClient) connect() {
 	opts := []grpc.DialOption{
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
 	}
 
 	connectionAddress := "[" + config.Params.HawkEye.Address + "]" + ":" + strconv.Itoa(config.Params.HawkEye.Port)
@@ -50,9 +49,9 @@ func (c *MessagingClient) connect() {
 	maxRetries := 5
 
 	for {
-		conn, err := grpc.Dial(connectionAddress, opts...)
+		conn, err := grpc.NewClient(connectionAddress, opts...)
 		if err != nil {
-			log.Printf("failed to dial: %v, retrying...", err)
+			log.Printf("failed to create client: %v, retrying...", err)
 			retryCount++
 			if retryCount >= maxRetries {
 				c.ErrCh <- fmt.Errorf("failed to connect after %d retries", maxRetries)

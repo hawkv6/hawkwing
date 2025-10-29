@@ -1,0 +1,29 @@
+{
+    "name": "Hawkwing Dev Container",
+    "image": "golang:1.25-bookworm",
+    "runArgs": [
+        "--platform=linux/amd64"
+    ],
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "golang.go",
+                "ms-vscode.makefile-tools",
+                "github.copilot",
+                "github.copilot-chat"
+            ],
+            "settings": {
+                "go.toolsManagement.checkForUpdates": "local",
+                "go.useLanguageServer": true,
+                "go.gopath": "/go",
+                "go.goroot": "/usr/local/go",
+                "terminal.integrated.defaultProfile.linux": "zsh"
+            }
+        }
+    },
+    "postCreateCommand": "apt-get update && apt-get install -y clang llvm libbpf-dev linux-headers-amd64 make git zsh && ln -sf /usr/include/x86_64-linux-gnu/asm /usr/include/asm && chsh -s /bin/zsh",
+    "remoteUser": "root",
+    "containerEnv": {
+        "DOCKER_BUILDKIT": "0"
+    }
+}
