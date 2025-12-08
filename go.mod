@@ -6,7 +6,7 @@ require (
 	github.com/cilium/ebpf v0.20.0
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/sirupsen/logrus v1.9.3
-	github.com/spf13/cobra v1.10.1
+	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/vishvananda/netlink v1.3.1
 	go.uber.org/mock v0.6.0
