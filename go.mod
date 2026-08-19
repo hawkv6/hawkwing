@@ -1,16 +1,16 @@
 module github.com/hawkv6/hawkwing
 
-go 1.25
+go 1.25.0
 
 require (
-	github.com/cilium/ebpf v0.20.0
+	github.com/cilium/ebpf v0.22.0
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/sirupsen/logrus v1.10.0
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/vishvananda/netlink v1.3.1
 	go.uber.org/mock v0.6.0
-	golang.org/x/sys v0.40.0
+	golang.org/x/sys v0.43.0
 	google.golang.org/grpc v1.80.0
 	google.golang.org/protobuf v1.36.11
 )
