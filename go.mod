@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	github.com/cilium/ebpf v0.22.0
 	github.com/go-playground/validator v9.31.0+incompatible
-	github.com/sirupsen/logrus v1.10.0
+	github.com/sirupsen/logrus v1.10.1
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/vishvananda/netlink v1.3.1
